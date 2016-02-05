@@ -47,7 +47,7 @@ typedef enum _HJResourceFetchFromType_
     
 } HJResourceFetchFromType;
 
-typedef void(^HJResourceManagerCompleteBlock)(NSDictionary *, NSDictionary *);
+typedef void(^HJResourceManagerCompleteBlock)(NSDictionary *);
 
 @interface HJResourceManager : HYManager
 {
@@ -103,6 +103,11 @@ typedef void(^HJResourceManagerCompleteBlock)(NSDictionary *, NSDictionary *);
 - (void)removeResourcesUnderMaximumBoundarySize:(NSUInteger)maximumBoundarySize completion:(HJResourceManagerCompleteBlock)completion;
 - (void)removeAllResourcesWithCompletion:(HJResourceManagerCompleteBlock)completion;
 - (void)amountSizeOfAllResoursesWithCompletion:(HJResourceManagerCompleteBlock)completion;
+
+- (NSString *)resourcePathFromResourceQuery:(NSDictionary *)resourceQuery;
+- (NSString *)resourceKeyStringFromResourceQuery:(NSDictionary *)resourceQuery;
+- (NSString *)filePathFromReosurceQuery:(NSDictionary *)resourceQuery;
+- (NSNumber *)fileSizeFromReosurceQuery:(NSDictionary *)resourceQuery;
 
 @property (nonatomic, readonly) NSString *repositoryPath;
 @property (nonatomic, readonly) BOOL standby;

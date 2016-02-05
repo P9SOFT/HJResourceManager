@@ -27,10 +27,6 @@
 - (NSString *)hashKeyStringFromPlainString:(NSString *)plainString;
 - (BOOL)isRemoteResource:(NSString *)requestValue;
 - (NSUInteger)sizeOfResource:(id)aResource;
-- (NSString *)resourcePathFromResourceQuery:(NSDictionary *)resourceQuery;
-- (NSString *)resourceKeyStringFromResourceQuery:(NSDictionary *)resourceQuery;
-- (NSString *)filePathFromReosurceQuery:(NSDictionary *)resourceQuery;
-- (NSNumber *)fileSizeFromReosurceQuery:(NSDictionary *)resourceQuery;
 - (id)resourceFromMemoryCacheForKey:(NSString *)resourceKey;
 - (void)setResourceToMemoryCache:(id)aResource forKey:(NSString *)resourceKey;
 - (void)removeResourceFromMemoryCacheForKey:(NSString *)resourceKey;
@@ -101,28 +97,24 @@
     if( completion == nil ) {
         return;
     }
-    NSDictionary *requestDict = [paramDict objectForKey:HJResourceManagerParameterKeyResourceQuery];
-    NSDictionary *resultDict;
-    id aResource;
-    if( (aResource = [paramDict objectForKey:HJResourceManagerParameterKeyDataObject]) == nil ) {
-        resultDict = nil;
-    } else {
-        resultDict = @{HJResourceManagerParameterKeyDataObject:aResource};
-    }
+    
     dispatch_async(dispatch_get_main_queue(), ^{
-        completion(requestDict, resultDict);
+        completion(paramDict);
     });
 }
 
 - (void)postNotifyWithStatus:(HJResourceManagerRequestStatus)status resourceQuery:(NSDictionary *)resourceQuery resource:(id)aResource completion:(HJResourceManagerCompleteBlock)completion
 {
-    NSDictionary *paramDict;
-    if( aResource == nil ) {
-        paramDict = @{HJResourceManagerParameterKeyResourceQuery:resourceQuery};
-    } else {
-        paramDict = @{HJResourceManagerParameterKeyResourceQuery:resourceQuery, HJResourceManagerParameterKeyDataObject:aResource};
+    NSMutableDictionary *paramDict = [NSMutableDictionary new];
+    [paramDict setObject:@((NSUInteger)status) forKey:HJResourceManagerParameterKeyRequestStatus];
+    if( resourceQuery != nil ) {
+        [paramDict setObject:resourceQuery forKey:HJResourceManagerParameterKeyResourceQuery];
     }
-    [self postNotifyWithParamDict:paramDict completion:completion];
+    if( aResource != nil ) {
+        [paramDict setObject:aResource forKey:HJResourceManagerParameterKeyDataObject];
+    }
+    
+    [self postNotifyWithParamDict:[NSDictionary dictionaryWithDictionary:paramDict] completion:completion];
 }
 
 - (NSString *)hashKeyStringFromPlainString:(NSString *)plainString
@@ -193,77 +185,6 @@
     }
     
     return size;
-}
-
-- (NSString *)resourcePathFromResourceQuery:(NSDictionary *)resourceQuery
-{
-    NSString *hashKey = [self hashKeyStringFromPlainString:[resourceQuery objectForKey:HJResourceQueryKeyRequestValue]];
-    if( hashKey == nil ) {
-        return nil;
-    }
-    
-    return [self.repositoryPath stringByAppendingPathComponent:hashKey];
-}
-
-- (NSString *)resourceKeyStringFromResourceQuery:(NSDictionary *)resourceQuery
-{
-    NSString *hashKey = [self hashKeyStringFromPlainString:[resourceQuery objectForKey:HJResourceQueryKeyRequestValue]];
-    if( hashKey == nil ) {
-        return nil;
-    }
-    id remaker;
-    NSString *remakerName = [resourceQuery objectForKey:HJResourceQueryKeyRemakerName];
-    if( [remakerName length] == 0 ) {
-        remaker = nil;
-    } else {
-        [_lockForSupportDict lock];
-        remaker = [_remakerDict objectForKey:remakerName];
-        [_lockForSupportDict unlock];
-    }
-    NSString *identifier;
-    NSString *subIdentifier;
-    if( remaker != nil ) {
-        identifier = [remaker identifier];
-        subIdentifier = [remaker subIdentifierForParameter:[resourceQuery objectForKey:HJResourceQueryKeyRemakerParameter]];
-    } else {
-        identifier = HJResourceOriginalFileName;
-        subIdentifier = nil;
-    }
-    if( identifier == nil ) {
-        return nil;
-    }
-    NSString *resourceKey;
-    if( [subIdentifier length] > 0 ) {
-        resourceKey = [NSString stringWithFormat: @"%@/%@_%@", hashKey, identifier, subIdentifier];
-    } else {
-        resourceKey = [NSString stringWithFormat: @"%@/%@", hashKey, identifier];
-    }
-    
-    return resourceKey;
-}
-
-- (NSString *)filePathFromReosurceQuery:(NSDictionary *)resourceQuery
-{
-    NSString *resourceKey = [self resourceKeyStringFromResourceQuery:resourceQuery];
-    if( [resourceKey length] == 0 ) {
-        return nil;
-    }
-    
-    return [self.repositoryPath stringByAppendingPathComponent:resourceKey];
-}
-
-- (NSNumber *)fileSizeFromReosurceQuery:(NSDictionary *)resourceQuery
-{
-    NSString *filePath = [self filePathFromReosurceQuery:resourceQuery];
-    if( [filePath length] == 0 ) {
-        return nil;
-    }
-    NSDictionary *attribute = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
-    if( attribute == nil ) {
-        return nil;
-    }
-    
-    return [attribute objectForKey:NSFileSize];
 }
 
 - (id)resourceFromMemoryCacheForKey:(NSString *)resourceKey
@@ -369,7 +290,7 @@
     for( NSDictionary *waiterDict in waiters ) {
         HJResourceManagerCompleteBlock completion = [waiterDict objectForKey:kCompletionBlockKey];
         if( completion != nil ) {
-            completion([waiterDict objectForKey:kResourceQueryKey], [NSDictionary dictionaryWithDictionary:paramDict]);
+            completion([NSDictionary dictionaryWithDictionary:paramDict]);
         }
     }
 }
@@ -392,6 +313,9 @@
     NSMutableDictionary *paramDict = [NSMutableDictionary new];
     if( paramDict == nil ) {
         return nil;
+    }
+    if( resourceQuery != nil ) {
+        [paramDict setObject:resourceQuery forKey:HJResourceManagerParameterKeyResourceQuery];
     }
     
     switch( operation ) {
@@ -430,7 +354,7 @@
                 [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusUpdateFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
             }
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
-                completion(resourceQuery, [NSDictionary dictionaryWithDictionary:paramDict]);
+                completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
             break;
         case HJResourceExecutorLocalJobOperationRemoveByPath :
@@ -443,7 +367,7 @@
                 [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusRemoveFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
             }
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
-                completion(resourceQuery, [NSDictionary dictionaryWithDictionary:paramDict]);
+                completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
             break;
         case HJResourceExecutorLocalJobOperationAmountSize :
@@ -454,19 +378,19 @@
                 [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusCalculateFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
             }
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
-                completion(resourceQuery, [NSDictionary dictionaryWithDictionary:paramDict]);
+                completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
             break;
         default :
             [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusUnknownError) forKey:HJResourceManagerParameterKeyRequestStatus];
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
-                completion(resourceQuery, [NSDictionary dictionaryWithDictionary:paramDict]);
+                completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
             break;
     }
     
-    if( resourceQuery != nil ) {
-        [paramDict setObject:resourceQuery forKey:HJResourceManagerParameterKeyResourceQuery];
+    if( [paramDict count] == 0 ) {
+        return nil;
     }
     
     return paramDict;
@@ -486,6 +410,9 @@
     NSMutableDictionary *paramDict = [NSMutableDictionary new];
     if( paramDict == nil ) {
         return nil;
+    }
+    if( resourceQuery != nil ) {
+        [paramDict setObject:resourceQuery forKey:HJResourceManagerParameterKeyResourceQuery];
     }
     HJResourceManagerCompleteBlock completion = nil;
     
@@ -518,12 +445,12 @@
         default :
             [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusUnknownError) forKey:HJResourceManagerParameterKeyRequestStatus];
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
-                completion(resourceQuery, [NSDictionary dictionaryWithDictionary:paramDict]);
+                completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
     }
     
-    if( resourceQuery != nil ) {
-        [paramDict setObject:resourceQuery forKey:HJResourceManagerParameterKeyResourceQuery];
+    if( [paramDict count] == 0 ) {
+        return nil;
     }
     
     return paramDict;
@@ -1185,6 +1112,77 @@
     [query setParameter:self.repositoryPath forKey:HJResourceExecutorLocalJobParameterKeyResourcePath];
     [query setParameter:completion forKey:HJResourceManagerParameterKeyCompleteBlock];
     [[Hydra defaultHydra] pushQuery:query];
+}
+
+- (NSString *)resourcePathFromResourceQuery:(NSDictionary *)resourceQuery
+{
+    NSString *hashKey = [self hashKeyStringFromPlainString:[resourceQuery objectForKey:HJResourceQueryKeyRequestValue]];
+    if( hashKey == nil ) {
+        return nil;
+    }
+    
+    return [self.repositoryPath stringByAppendingPathComponent:hashKey];
+}
+
+- (NSString *)resourceKeyStringFromResourceQuery:(NSDictionary *)resourceQuery
+{
+    NSString *hashKey = [self hashKeyStringFromPlainString:[resourceQuery objectForKey:HJResourceQueryKeyRequestValue]];
+    if( hashKey == nil ) {
+        return nil;
+    }
+    id remaker;
+    NSString *remakerName = [resourceQuery objectForKey:HJResourceQueryKeyRemakerName];
+    if( [remakerName length] == 0 ) {
+        remaker = nil;
+    } else {
+        [_lockForSupportDict lock];
+        remaker = [_remakerDict objectForKey:remakerName];
+        [_lockForSupportDict unlock];
+    }
+    NSString *identifier;
+    NSString *subIdentifier;
+    if( remaker != nil ) {
+        identifier = [remaker identifier];
+        subIdentifier = [remaker subIdentifierForParameter:[resourceQuery objectForKey:HJResourceQueryKeyRemakerParameter]];
+    } else {
+        identifier = HJResourceOriginalFileName;
+        subIdentifier = nil;
+    }
+    if( identifier == nil ) {
+        return nil;
+    }
+    NSString *resourceKey;
+    if( [subIdentifier length] > 0 ) {
+        resourceKey = [NSString stringWithFormat: @"%@/%@_%@", hashKey, identifier, subIdentifier];
+    } else {
+        resourceKey = [NSString stringWithFormat: @"%@/%@", hashKey, identifier];
+    }
+    
+    return resourceKey;
+}
+
+- (NSString *)filePathFromReosurceQuery:(NSDictionary *)resourceQuery
+{
+    NSString *resourceKey = [self resourceKeyStringFromResourceQuery:resourceQuery];
+    if( [resourceKey length] == 0 ) {
+        return nil;
+    }
+    
+    return [self.repositoryPath stringByAppendingPathComponent:resourceKey];
+}
+
+- (NSNumber *)fileSizeFromReosurceQuery:(NSDictionary *)resourceQuery
+{
+    NSString *filePath = [self filePathFromReosurceQuery:resourceQuery];
+    if( [filePath length] == 0 ) {
+        return nil;
+    }
+    NSDictionary *attribute = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
+    if( attribute == nil ) {
+        return nil;
+    }
+    
+    return [attribute objectForKey:NSFileSize];
 }
 
 - (NSUInteger)limitSizeOfMemory
