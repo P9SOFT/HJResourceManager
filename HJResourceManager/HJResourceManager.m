@@ -20,7 +20,26 @@
 #define         kResourceQueryKey                       @"r"
 #define         kCompletionBlockKey                     @"b"
 
-@interface HJResourceManager( HJResourceManagerPrivate )
+@interface HJResourceManager()
+{
+    BOOL                        _standby;
+    BOOL                        _paused;
+    NSUInteger                  _usedMemorySize;
+    NSUInteger                  _limitSizeOfMemory;
+    NSString                    *_repositoryPath;
+    NSLock                      *_lockForResourceDict;
+    NSMutableDictionary         *_loadedResourceDict;
+    NSMutableArray              *_referenceOrder;
+    NSMutableDictionary         *_requestingResourceKeyDict;
+    NSLock                      *_lockForHashKeyDict;;
+    NSMutableDictionary         *_loadedResourceKeyDict;
+    NSMutableDictionary         *_loadedHashKeyDict;
+    NSLock                      *_lockForSupportDict;
+    NSMutableDictionary         *_remakerDict;
+    NSMutableDictionary         *_cipherDict;
+    HJResourceExecutorLocalJob  *_localJobExecutor;
+    HJResourceExecutorRemoteJob *_remoteJobExecutor;
+}
 
 - (void)postNotifyWithParamDict:(NSDictionary *)paramDict completion:(HJResourceManagerCompleteBlock)completion;
 - (void)postNotifyWithStatus:(HJResourceManagerRequestStatus)status resourceQuery:(NSDictionary *)resourceQuery resource:(id)aResource completion:(HJResourceManagerCompleteBlock)completion;
@@ -30,7 +49,6 @@
 - (id)resourceFromMemoryCacheForKey:(NSString *)resourceKey;
 - (void)setResourceToMemoryCache:(id)aResource forKey:(NSString *)resourceKey;
 - (void)removeResourceFromMemoryCacheForKey:(NSString *)resourceKey;
-- (void)touchLoadedResoruceForKey:(NSString *)resourceKey;
 - (void)balancingWithLimitSizeOfMemory;
 - (void)executeCompletionResult:(HYResult *)result withParamDict:(NSMutableDictionary *)paramDict forResourceQuery:(NSDictionary *)resourceQuery;
 - (NSMutableDictionary *)localJobHandlerWithResult:(HYResult *)result;
@@ -44,6 +62,8 @@
 @synthesize standby = _standby;
 @synthesize usedMemorySize = _usedMemorySize;
 @dynamic limitSizeOfMemory;
+@dynamic timeoutInterval;
+@dynamic maximumConnection;
 
 - (NSString *) name
 {
@@ -82,6 +102,12 @@
         return NO;
     }
     if( (_cipherDict = [[NSMutableDictionary alloc] init]) == nil ) {
+        return NO;
+    }
+    if( (_localJobExecutor = [[HJResourceExecutorLocalJob alloc] init]) == nil ) {
+        return NO;
+    }
+    if( (_remoteJobExecutor = [[HJResourceExecutorRemoteJob alloc] init]) == nil ) {
         return NO;
     }
     
@@ -488,8 +514,8 @@
     
     _repositoryPath = [repositoryPath copy];
     
-    [self registExecuter:[[HJResourceExecutorLocalJob alloc] init] withWorkerName:localJobWorkerName action:@selector(localJobHandlerWithResult:)];
-    [self registExecuter:[[HJResourceExecutorRemoteJob alloc] init] withWorkerName:remoteJobWorkerName action:@selector(remoteJobHandlerWithResult:)];
+    [self registExecuter:_localJobExecutor withWorkerName:localJobWorkerName action:@selector(localJobHandlerWithResult:)];
+    [self registExecuter:_remoteJobExecutor withWorkerName:remoteJobWorkerName action:@selector(remoteJobHandlerWithResult:)];
     
     _standby = YES;
     
@@ -724,6 +750,11 @@
 
 - (void)resourceForQuery:(NSDictionary *)resourceQuery completion:(HJResourceManagerCompleteBlock)completion
 {
+    [self resourceForQuery:resourceQuery cutInLine:NO completion:completion];
+}
+
+- (void)resourceForQuery:(NSDictionary *)resourceQuery cutInLine:(BOOL)cutInLine completion:(HJResourceManagerCompleteBlock)completion
+{
     if( (self.standby == NO) || ([resourceQuery objectForKey:HJResourceQueryKeyRequestValue] == nil) ) {
         [self postNotifyWithStatus:HJResourceManagerRequestStatusLoadFailed resourceQuery:resourceQuery resource:nil completion:completion];
         return;
@@ -815,6 +846,9 @@
     [query setParameter:remaker forKey:HJResourceExecutorLocalJobParameterKeyRemaker];
     [query setParameter:remakerParameter forKey:HJResourceExecutorLocalJobParameterKeyRemakerParameter];
     [query setParameter:[resourceQuery objectForKey:HJResourceQueryKeyExpireTimeInterval] forKey:HJResourceExecutorLocalJobParameterKeyExpireTimeInterval];
+    if( cutInLine == YES ) {
+        [query setParameter:@(1) forKey:HJResourceExecutorRemoteJobParameterKeyCutInLine];
+    }
     [query setParameter:resourceQuery forKey:HJResourceManagerParameterKeyResourceQuery];
     [query setParameter:@(remoteResourceFalg) forKey:HJResourceManagerParameterKeyRemoteResourceFlag];
     [query setParameter:completion forKey:HJResourceManagerParameterKeyCompleteBlock];
@@ -1202,6 +1236,26 @@
     
     _limitSizeOfMemory = limitSizeOfMemory;
     [self balancingWithLimitSizeOfMemory];
+}
+
+- (NSTimeInterval)timeoutInterval
+{
+    return _remoteJobExecutor.timeoutInterval;
+}
+
+- (void)setTimeoutInterval:(NSTimeInterval)timeoutInterval
+{
+    _remoteJobExecutor.timeoutInterval = timeoutInterval;
+}
+
+- (NSInteger)maximumConnection
+{
+    return _remoteJobExecutor.maximumConnection;
+}
+
+- (void)setMaximumConnection:(NSInteger)maximumConnection
+{
+    _remoteJobExecutor.maximumConnection = maximumConnection;
 }
 
 @end

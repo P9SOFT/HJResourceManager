@@ -14,7 +14,6 @@
 
 #define     HJResourceQueryKeyRequestValue          @"HJResourceQueryKeyRequestValue"
 #define     HJResourceQueryKeyFirstFetchFrom        @"HJResourceQueryKeyFirstFetchFrom"
-#define     HJResourceQueryKeyCutInLine             @"HJResourceQueryKeyCutInLine"
 #define     HJResourceQueryKeyDataType              @"HJResourceQueryKeyDataType"
 #define     HJResourceQueryKeyDataValue             @"HJResourceQueryKeyDataValue"
 #define     HJResourceQueryKeyRemakerName           @"HJResourceQueryKeyRemakerName"

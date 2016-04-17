@@ -50,23 +50,6 @@ typedef enum _HJResourceFetchFromType_
 typedef void(^HJResourceManagerCompleteBlock)(NSDictionary *);
 
 @interface HJResourceManager : HYManager
-{
-    BOOL                    _standby;
-    BOOL                    _paused;
-    NSUInteger              _usedMemorySize;
-    NSUInteger              _limitSizeOfMemory;
-    NSString                *_repositoryPath;
-    NSLock                  *_lockForResourceDict;
-    NSMutableDictionary     *_loadedResourceDict;
-    NSMutableArray          *_referenceOrder;
-    NSMutableDictionary     *_requestingResourceKeyDict;
-    NSLock                  *_lockForHashKeyDict;;
-    NSMutableDictionary     *_loadedResourceKeyDict;
-    NSMutableDictionary     *_loadedHashKeyDict;
-    NSLock                  *_lockForSupportDict;
-    NSMutableDictionary     *_remakerDict;
-    NSMutableDictionary     *_cipherDict;
-}
 
 + (HJResourceManager *)defaultManager;
 
@@ -91,6 +74,7 @@ typedef void(^HJResourceManagerCompleteBlock)(NSDictionary *);
 - (NSData *)remakeData:(NSData *)anData withParameter:(id)anParameter forName:(NSString *)name;
 
 - (void)resourceForQuery:(NSDictionary *)resourceQuery completion:(HJResourceManagerCompleteBlock)completion;
+- (void)resourceForQuery:(NSDictionary *)resourceQuery cutInLine:(BOOL)cutInLine completion:(HJResourceManagerCompleteBlock)completion;
 - (NSDate *)cachedDateOfResourceForQuery:(NSDictionary *)resourceQuery;
 - (BOOL)checkValidationOfResourceWithExpireTimeInterval:(NSTimeInterval)expireTimeInterval forQuery:(NSDictionary *)resourceQuery;
 - (id)cachedResourceForQuery:(NSDictionary *)resourceQuery;
@@ -113,5 +97,7 @@ typedef void(^HJResourceManagerCompleteBlock)(NSDictionary *);
 @property (nonatomic, readonly) BOOL standby;
 @property (nonatomic, readonly) NSUInteger usedMemorySize;
 @property (nonatomic, assign) NSUInteger limitSizeOfMemory;
+@property (nonatomic, assign) NSTimeInterval timeoutInterval;
+@property (nonatomic, assign) NSInteger maximumConnection;
 
 @end
