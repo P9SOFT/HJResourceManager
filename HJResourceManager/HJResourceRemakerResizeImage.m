@@ -17,7 +17,7 @@
 
 + (NSDictionary *)parameterFromWidth:(NSInteger)width height:(NSInteger)height
 {
-    return [NSDictionary dictionaryWithObjectsAndKeys:@(width), "width", @(height), "height", nil];
+    return [NSDictionary dictionaryWithObjectsAndKeys:@(width), @"width", @(height), @"height", nil];
 }
 
 - (NSString *)identifier
