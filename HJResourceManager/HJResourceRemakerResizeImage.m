@@ -15,9 +15,9 @@
 
 @implementation HJResourceRemakerResizeImage
 
-+ (NSArray *)parameterFromWidth:(NSInteger)width height:(NSInteger)height
++ (NSDictionary *)parameterFromWidth:(NSInteger)width height:(NSInteger)height
 {
-    return [NSArray arrayWithObjects:[NSNumber numberWithInteger:width], [NSNumber numberWithInteger:height], nil];
+    return [NSDictionary dictionaryWithObjectsAndKeys:@(width), "width", @(height), "height", nil];
 }
 
 - (NSString *)identifier
