@@ -15,6 +15,7 @@
 #define		HJResourceExecutorLocalJobParameterKeyStatus                @"HJResourceExecutorLocalJobParameterKeyStatus"
 #define		HJResourceExecutorLocalJobParameterKeyOperation             @"HJResourceExecutorLocalJobParameterKeyOperation"
 #define		HJResourceExecutorLocalJobParameterKeyDataType              @"HJResourceExecutorLocalJobParameterKeyDataType"
+#define		HJResourceExecutorLocalJobParameterKeyImageScale            @"HJResourceExecutorLocalJobParameterKeyImageScale"
 #define		HJResourceExecutorLocalJobParameterKeyMimeType              @"HJResourceExecutorLocalJobParameterKeyMimeType"
 #define		HJResourceExecutorLocalJobParameterKeyResourceUrl           @"HJResourceExecutorLocalJobParameterKeyResourceUrl"
 #define		HJResourceExecutorLocalJobParameterKeyResourcePath          @"HJResourceExecutorLocalJobParameterKeyResourcePath"

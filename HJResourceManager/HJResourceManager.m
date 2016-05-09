@@ -781,6 +781,7 @@
                 break;
         }
     }
+    NSNumber *imageScale = [resourceQuery objectForKey:HJResourceQueryKeyImageScale];
     HJResourceFetchFromType fetchFromType = (HJResourceFetchFromType)[[resourceQuery objectForKey:HJResourceQueryKeyFirstFetchFrom] integerValue];
     
     if( fetchFromType == HJResourceFetchFromTypeMemory ) {
@@ -842,6 +843,7 @@
         [query setParameter:requestValue forKey:HJResourceExecutorLocalJobParameterKeyResourceUrl];
     }
     [query setParameter:dataTypeNumber forKey:HJResourceExecutorLocalJobParameterKeyDataType];
+    [query setParameter:imageScale forKey:HJResourceExecutorLocalJobParameterKeyImageScale];
     [query setParameter:cipher forKey:HJResourceExecutorLocalJobParameterKeyCipher];
     [query setParameter:remaker forKey:HJResourceExecutorLocalJobParameterKeyRemaker];
     [query setParameter:remakerParameter forKey:HJResourceExecutorLocalJobParameterKeyRemakerParameter];

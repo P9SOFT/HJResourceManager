@@ -10,6 +10,11 @@
 #import <UIKit/UIKit.h>
 #import <HJResourceManager/HJResourceRemakerProtocol.h>
 
+#define     HJResourceRemakerResizeImageParameterWidthKey       @"width"
+#define     HJResourceRemakerResizeImageParameterHeightKey      @"height"
+#define     HJResourceRemakerResizeImageParameterScaleKey       @"scale"
+#define     HJResourceRemakerResizeImageParameterFileFormatKey  @"fileFormat"
+
 @interface HJResourceRemakerResizeImage : NSObject <HJResourceRemakerProtocol>
 
 + (NSDictionary *)parameterFromWidth:(NSInteger)width height:(NSInteger)height;

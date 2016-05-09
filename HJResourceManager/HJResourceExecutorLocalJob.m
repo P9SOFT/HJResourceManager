@@ -221,6 +221,7 @@
         return;
     }
     
+    CGFloat scale;
     id dataObject;
     switch( dataType ) {
         case HJResourceDataTypeData :
@@ -230,7 +231,10 @@
             dataObject = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
             break;
         case HJResourceDataTypeImage :
-            dataObject = [UIImage imageWithData:data];
+            if( (scale = [[anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyImageScale] floatValue]) == 0.0 ) {
+                scale = [UIScreen mainScreen].scale;
+            }
+            dataObject = [UIImage imageWithData:data scale:scale];
             break;
         default :
             dataObject = nil;
