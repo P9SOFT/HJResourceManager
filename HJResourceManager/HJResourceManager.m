@@ -248,6 +248,8 @@
     
     [_lockForResourceDict lock];
     [_loadedResourceDict setObject:aResource forKey:resourceKey];
+    [_referenceOrder addObject:resourceKey];
+    _usedMemorySize += [self sizeOfResource:aResource];
     [_lockForResourceDict unlock];
     
     [self balancingWithLimitSizeOfMemory];
@@ -263,7 +265,12 @@
     
     [_lockForResourceDict lock];
     if( (aResource = [_loadedResourceDict objectForKey:resourceKey]) != nil ) {
-        _usedMemorySize -= [self sizeOfResource:aResource];
+        NSUInteger size = [self sizeOfResource:aResource];
+        if( _usedMemorySize > size ) {
+            _usedMemorySize -= size;
+        } else {
+            _usedMemorySize = 0;
+        }
         [_loadedResourceDict removeObjectForKey:resourceKey];
         NSUInteger count = [_referenceOrder count];
         NSUInteger i;
@@ -279,7 +286,7 @@
 
 - (void)balancingWithLimitSizeOfMemory
 {
-    if( (_limitSizeOfMemory == 0) || (_usedMemorySize <= _limitSizeOfMemory) ) {
+    if( _usedMemorySize <= _limitSizeOfMemory ) {
         return;
     }
     
@@ -289,7 +296,11 @@
         NSUInteger size = [self sizeOfResource:[_loadedResourceDict objectForKey:resourceKey]];
         [_loadedResourceDict removeObjectForKey:resourceKey];
         [_referenceOrder removeLastObject];
-        _usedMemorySize -= size;
+        if( _usedMemorySize > size ) {
+            _usedMemorySize -= size;
+        } else {
+            _usedMemorySize = 0;
+        }
         if( _usedMemorySize <= _limitSizeOfMemory ) {
             break;
         }
@@ -1035,6 +1046,7 @@
     }
     
     [_lockForResourceDict lock];
+    _usedMemorySize = 0;
     [_loadedResourceDict removeAllObjects];
     [_referenceOrder removeAllObjects];
     [_lockForResourceDict unlock];
