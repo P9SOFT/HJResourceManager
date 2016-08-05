@@ -925,14 +925,14 @@
         if( filePath == nil ) {
             return nil;
         }
-        HJResourceDataType dataType;
+        HJResourceDataType dataType = HJResourceDataTypeData;
         NSNumber *dataTypeNumber = [resourceQuery objectForKey:HJResourceQueryKeyDataType];
         if( dataTypeNumber == nil ) {
-            dataType = HJResourceDataTypeData;
-        } else {
             NSString *mimeTypeFilePath = [[self resourcePathFromResourceQuery:resourceQuery] stringByAppendingPathComponent:HJResourceMimeTypeFileName];
             NSString *mimeType = [NSString stringWithContentsOfFile:mimeTypeFilePath encoding:NSUTF8StringEncoding error:nil];
             dataType = [HJResourceCommon dataTypeFromMimeType:mimeType];
+        } else {
+            dataType = (HJResourceDataType)[dataTypeNumber integerValue];
         }
         NSData *data;
         switch( dataType ) {
