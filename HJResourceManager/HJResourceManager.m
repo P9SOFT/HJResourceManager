@@ -484,6 +484,7 @@
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
                 completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
+            break;
     }
     
     if( [paramDict count] == 0 ) {
@@ -939,6 +940,7 @@
                 if( (data = [NSData dataWithContentsOfFile:filePath]) != nil ) {
                     aResource = data;
                 }
+                break;
             case HJResourceDataTypeString :
                 if( (data = [NSData dataWithContentsOfFile:filePath]) != nil ) {
                     aResource = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
