@@ -488,6 +488,7 @@
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
                 completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
+            break;
     }
     
     if( [paramDict count] == 0 ) {
@@ -928,14 +929,14 @@
         if( filePath == nil ) {
             return nil;
         }
-        HJResourceDataType dataType;
+        HJResourceDataType dataType = HJResourceDataTypeData;
         NSNumber *dataTypeNumber = [resourceQuery objectForKey:HJResourceQueryKeyDataType];
         if( dataTypeNumber == nil ) {
-            dataType = HJResourceDataTypeData;
-        } else {
             NSString *mimeTypeFilePath = [[self resourcePathFromResourceQuery:resourceQuery] stringByAppendingPathComponent:HJResourceMimeTypeFileName];
             NSString *mimeType = [NSString stringWithContentsOfFile:mimeTypeFilePath encoding:NSUTF8StringEncoding error:nil];
             dataType = [HJResourceCommon dataTypeFromMimeType:mimeType];
+        } else {
+            dataType = (HJResourceDataType)[dataTypeNumber integerValue];
         }
         NSData *data;
         switch( dataType ) {
@@ -943,6 +944,7 @@
                 if( (data = [NSData dataWithContentsOfFile:filePath]) != nil ) {
                     aResource = data;
                 }
+                break;
             case HJResourceDataTypeString :
                 if( (data = [NSData dataWithContentsOfFile:filePath]) != nil ) {
                     aResource = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
