@@ -374,9 +374,13 @@
                     [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoadFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
                     break;
                 case HJResourceExecutorLocalJobStatusLoaded :
-                    [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoaded) forKey:HJResourceManagerParameterKeyRequestStatus];
-                    [paramDict setObject:dataObject forKey:HJResourceManagerParameterKeyDataObject];
-                    [self setResourceToMemoryCache:dataObject forKey:resourceKey];
+                    if( dataObject != nil ) {
+                        [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoaded) forKey:HJResourceManagerParameterKeyRequestStatus];
+                        [paramDict setObject:dataObject forKey:HJResourceManagerParameterKeyDataObject];
+                        [self setResourceToMemoryCache:dataObject forKey:resourceKey];
+                    } else {
+                        [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoadFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
+                    }
                     break;
                 default :
                     [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoadFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
@@ -408,7 +412,7 @@
             }
             break;
         case HJResourceExecutorLocalJobOperationAmountSize :
-            if( status == HJResourceExecutorLocalJobStatusCalculated ) {
+            if( (status == HJResourceExecutorLocalJobStatusCalculated) && (dataObject != nil) ) {
                 [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusCalculated) forKey:HJResourceManagerParameterKeyRequestStatus];
                 [paramDict setObject:dataObject forKey:HJResourceManagerParameterKeyDataObject];
             } else {
