@@ -2,6 +2,7 @@ HJResourceManager
 ============
 
 HJResourceManager is simple and flexible communication module for HTTP based on Hydra framework.
+You can download and manage resource files with cache support, and easily append cryptogram, reprocessing module.
 
 # Installation
 
