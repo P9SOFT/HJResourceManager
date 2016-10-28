@@ -19,6 +19,7 @@
 #define			kRemakerPathComponent					@"remaker"
 #define         kResourceQueryKey                       @"r"
 #define         kCompletionBlockKey                     @"b"
+#define         kCutInLineKey                           @"c"
 
 @interface HJResourceManager()
 {
@@ -31,6 +32,7 @@
     NSMutableDictionary         *_loadedResourceDict;
     NSMutableArray              *_referenceOrder;
     NSMutableDictionary         *_requestingResourceKeyDict;
+    NSMutableDictionary         *_remakingResourceKeyDict;
     NSLock                      *_lockForHashKeyDict;;
     NSMutableDictionary         *_loadedResourceKeyDict;
     NSMutableDictionary         *_loadedHashKeyDict;
@@ -43,6 +45,7 @@
 
 - (void)postNotifyWithParamDict:(NSDictionary *)paramDict completion:(HJResourceManagerCompleteBlock)completion;
 - (void)postNotifyWithStatus:(HJResourceManagerRequestStatus)status resourceQuery:(NSDictionary *)resourceQuery resource:(id)aResource completion:(HJResourceManagerCompleteBlock)completion;
+- (NSString *)requestKeyStringFromResourceQuery:(NSDictionary *)resourceQuery;
 - (NSString *)hashKeyStringFromPlainString:(NSString *)plainString;
 - (BOOL)isRemoteResource:(NSString *)requestValue;
 - (NSUInteger)sizeOfResource:(id)aResource;
@@ -87,6 +90,9 @@
         return NO;
     }
     if( (_requestingResourceKeyDict = [[NSMutableDictionary alloc] init]) == nil ) {
+        return NO;
+    }
+    if( (_remakingResourceKeyDict = [[NSMutableDictionary alloc] init]) == nil) {
         return NO;
     }
     if( (_lockForHashKeyDict = [[NSLock alloc] init]) == nil ) {
@@ -143,6 +149,11 @@
     [self postNotifyWithParamDict:[NSDictionary dictionaryWithDictionary:paramDict] completion:completion];
 }
 
+- (NSString *)requestKeyStringFromResourceQuery:(NSDictionary *)resourceQuery
+{
+    return [self hashKeyStringFromPlainString:[resourceQuery objectForKey:HJResourceQueryKeyRequestValue]];
+}
+
 - (NSString *)hashKeyStringFromPlainString:(NSString *)plainString
 {
     if( [plainString length] == 0 ) {
@@ -154,15 +165,15 @@
     [_lockForHashKeyDict lock];
     
     if( (hashKeyString = [_loadedHashKeyDict objectForKey:plainString]) == nil ) {
-    
+        
         const char *utf8buffer;
         unsigned char pattern[16];
         
         if( (utf8buffer = [plainString UTF8String]) != NULL ) {
             CC_MD5(utf8buffer, (CC_LONG)strlen(utf8buffer), pattern);
             hashKeyString = [NSString stringWithFormat:@"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
-                                                        pattern[0], pattern[1], pattern[2], pattern[3], pattern[4], pattern[5], pattern[6], pattern[7],
-                                                        pattern[8], pattern[9], pattern[10], pattern[11], pattern[12], pattern[13], pattern[14], pattern[15]
+                             pattern[0], pattern[1], pattern[2], pattern[3], pattern[4], pattern[5], pattern[6], pattern[7],
+                             pattern[8], pattern[9], pattern[10], pattern[11], pattern[12], pattern[13], pattern[14], pattern[15]
                              ];
         } else {
             hashKeyString = nil;
@@ -310,21 +321,33 @@
 
 - (void)executeCompletionResult:(HYResult *)result withParamDict:(NSMutableDictionary *)paramDict forResourceQuery:(NSDictionary *)resourceQuery
 {
-    NSString *resourceKey = [self resourceKeyStringFromResourceQuery:resourceQuery];
-    if( [resourceKey length] == 0 ) {
+    NSString *requestKey = [self requestKeyStringFromResourceQuery:resourceQuery];
+    if( [requestKey length] == 0 ) {
         return;
     }
     
-    NSArray *waiters = nil;
+    NSArray *requestingWaiters = nil;
+    NSArray *remakingWaiters = nil;
     
     [_lockForResourceDict lock];
-    if( [_requestingResourceKeyDict objectForKey:resourceKey] != nil ) {
-        waiters = [NSArray arrayWithArray:[_requestingResourceKeyDict objectForKey:resourceKey]];
-        [_requestingResourceKeyDict removeObjectForKey:resourceKey];
+    if( [_requestingResourceKeyDict objectForKey:requestKey] != nil ) {
+        requestingWaiters = [NSArray arrayWithArray:[_requestingResourceKeyDict objectForKey:requestKey]];
+        [_requestingResourceKeyDict removeObjectForKey:requestKey];
+    }
+    if( [_remakingResourceKeyDict objectForKey:requestKey] != nil ) {
+        remakingWaiters = [NSArray arrayWithArray:[_remakingResourceKeyDict objectForKey:requestKey]];
+        [_remakingResourceKeyDict removeObjectForKey:requestKey];
     }
     [_lockForResourceDict unlock];
     
-    for( NSDictionary *waiterDict in waiters ) {
+    for( NSDictionary *waiterDict in remakingWaiters ) {
+        NSDictionary *currentResourceQuery = [waiterDict objectForKey:kResourceQueryKey];
+        BOOL cutInLine = [[waiterDict objectForKey:kCutInLineKey] boolValue];
+        HJResourceManagerCompleteBlock completion = [waiterDict objectForKey:kCompletionBlockKey];
+        [self resourceForQuery:currentResourceQuery cutInLine:cutInLine completion:completion];
+    }
+    
+    for( NSDictionary *waiterDict in requestingWaiters ) {
         HJResourceManagerCompleteBlock completion = [waiterDict objectForKey:kCompletionBlockKey];
         if( completion != nil ) {
             completion([NSDictionary dictionaryWithDictionary:paramDict]);
@@ -779,8 +802,9 @@
     NSString *requestValue = [resourceQuery objectForKey:HJResourceQueryKeyRequestValue];
     BOOL remoteResourceFalg = [self isRemoteResource:requestValue];
     NSString *resourceKey = [self resourceKeyStringFromResourceQuery:resourceQuery];
+    NSString *requestKey = [self requestKeyStringFromResourceQuery:resourceQuery];
     NSString *resourcePath = [self resourcePathFromResourceQuery:resourceQuery];
-    if( (resourceKey == nil) || (resourcePath == nil) ) {
+    if( (resourceKey == nil) || (requestKey == nil) || (resourcePath == nil) ) {
         [self postNotifyWithStatus:HJResourceManagerRequestStatusLoadFailed resourceQuery:resourceQuery resource:nil completion:completion];
         return;
     }
@@ -808,28 +832,38 @@
         }
     }
     
-    NSMutableArray *waiters = nil;
+    NSMutableArray *requestingWaiters = nil;
+    NSMutableArray *remakingWaiters = nil;
     [_lockForResourceDict lock];
-    if( (waiters = [_requestingResourceKeyDict objectForKey:resourceKey]) != nil ) {
-        if( completion != nil ) {
-            [waiters addObject:@{kResourceQueryKey:resourceQuery,kCompletionBlockKey:completion}];
+    if( (requestingWaiters = [_requestingResourceKeyDict objectForKey:requestKey]) != nil ) {
+        NSDictionary *waiter = (completion != nil) ? @{kResourceQueryKey:resourceQuery,kCutInLineKey:@(cutInLine),kCompletionBlockKey:completion} : @{kResourceQueryKey:resourceQuery,kCutInLineKey:@(cutInLine)};
+        NSString *remakerName = [resourceQuery objectForKey:HJResourceQueryKeyRemakerName];
+        if( (remakerName != nil) && ([remakerName isEqualToString:HJResourceOriginalFileName] == NO) ) {
+            if( (remakingWaiters = [_remakingResourceKeyDict objectForKey:requestKey]) == nil ) {
+                if( (remakingWaiters = [[NSMutableArray alloc] init]) == nil ) {
+                    [_lockForResourceDict unlock];
+                    [self postNotifyWithStatus:HJResourceManagerRequestStatusLoadFailed resourceQuery:resourceQuery resource:nil completion:completion];
+                }
+                [_remakingResourceKeyDict setObject:remakingWaiters forKey:requestKey];
+            }
+            [remakingWaiters addObject:waiter];
         } else {
-            [waiters addObject:@{kResourceQueryKey:resourceQuery}];
+            [requestingWaiters addObject:waiter];
         }
         [_lockForResourceDict unlock];
         return;
     }
-    if( (waiters = [[NSMutableArray alloc] init]) == nil ) {
+    if( (requestingWaiters = [[NSMutableArray alloc] init]) == nil ) {
         [_lockForResourceDict unlock];
         [self postNotifyWithStatus:HJResourceManagerRequestStatusLoadFailed resourceQuery:resourceQuery resource:nil completion:completion];
         return;
     }
     if( completion != nil ) {
-        [waiters addObject:@{kResourceQueryKey:resourceQuery,kCompletionBlockKey:completion}];
+        [requestingWaiters addObject:@{kResourceQueryKey:resourceQuery,kCutInLineKey:@(cutInLine),kCompletionBlockKey:completion}];
     } else {
-        [waiters addObject:@{kResourceQueryKey:resourceQuery}];
+        [requestingWaiters addObject:@{kResourceQueryKey:resourceQuery,kCutInLineKey:@(cutInLine)}];
     }
-    [_requestingResourceKeyDict setObject:waiters forKey:resourceKey];
+    [_requestingResourceKeyDict setObject:requestingWaiters forKey:requestKey];
     [_lockForResourceDict unlock];
     
     NSString *cipherName = [resourceQuery objectForKey:HJResourceQueryKeyCipherName];
