@@ -23,7 +23,7 @@
 #define     HJResourceQueryKeyExpireTimeInterval    @"HJResourceQueryKeyExpireTimeInterval"
 #define     HJResourceQueryKeyBoundarySize          @"HJResourceQueryKeyBoundarySize"
 
-typedef enum _HJResourceDataType_
+typedef NS_ENUM(NSInteger, HJResourceDataType)
 {
     HJResourceDataTypeData,
     HJResourceDataTypeString,
@@ -31,10 +31,10 @@ typedef enum _HJResourceDataType_
     HJResourceDataTypeSize,
     HJResourceDataTypeFilePath
     
-} HJResourceDataType;
+};
 
 @interface HJResourceCommon : NSObject
 
-+ (HJResourceDataType)dataTypeFromMimeType:(NSString *)mimeType;
++ (HJResourceDataType)dataTypeFromMimeType:(NSString * _Nullable)mimeType;
 
 @end

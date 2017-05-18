@@ -11,8 +11,8 @@
 
 @protocol HJResourceRemakerProtocol
 
-- (NSString *)identifier;
-- (NSString *)subIdentifierForParameter:(id)anParameter;
-- (NSData *)remakerData:(NSData *)anData withParameter:(id)anParameter;
+- (NSString * _Nullable)identifier;
+- (NSString * _Nullable)subIdentifierForParameter:(id _Nullable)anParameter;
+- (NSData * _Nullable)remakerData:(NSData * _Nullable)anData withParameter:(id _Nullable)anParameter;
 
 @end

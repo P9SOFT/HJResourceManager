@@ -39,13 +39,13 @@ static char g_base64DecodingTable[128] = {
     NSMutableData   *encodedData;
     uint8_t         *output;
     
-    if( (length = (int)[anData length]) <= 0 ) {
+    if( (length = (int)anData.length) <= 0 ) {
         return nil;
     }
     
     encodedData = [NSMutableData dataWithLength:((length + 2)/3)*4];
-    input = (uint8_t *)[anData bytes];
-    output = (uint8_t *)[encodedData mutableBytes];
+    input = (uint8_t *)anData.bytes;
+    output = (uint8_t *)encodedData.mutableBytes;
     
     for( i=0 ; i<length ; i+= 3 ) {
         value = 0;
@@ -74,20 +74,20 @@ static char g_base64DecodingTable[128] = {
     uint8_t         *output;
     char            i0, i1, i2, i3;
     
-    if( (inputLength = (int)[anData length]) <= 0 ) {
+    if( (inputLength = (int)anData.length) <= 0 ) {
         return nil;
     }
     if( (inputLength % 4) != 0 ) {
         return nil;
     }
     
-    input = (char *)[anData bytes];
+    input = (char *)anData.bytes;
     while( (inputLength > 0) && (input[inputLength-1] == '=') ) {
         -- inputLength;
     }
     outputLength = inputLength*3/4;
     decodedData = [NSMutableData dataWithLength:outputLength];
-    output = [decodedData mutableBytes];
+    output = decodedData.mutableBytes;
     inputPoint = 0;
     outputPoint = 0;
     
@@ -112,7 +112,7 @@ static char g_base64DecodingTable[128] = {
 {
     NSData *encryptedData;
     
-    if( ([anData length] <= 0) || ([path length] <= 0) ) {
+    if( (anData.length <= 0) || (path.length <= 0) ) {
         return NO;
     }
     if( (encryptedData = [self encryptData:anData]) == nil ) {
@@ -124,7 +124,7 @@ static char g_base64DecodingTable[128] = {
 
 - (NSData *)decryptDataFromFilePath:(NSString *)path
 {
-    if( [path length] <= 0 ) {
+    if( path.length <= 0 ) {
         return nil;
     }
     

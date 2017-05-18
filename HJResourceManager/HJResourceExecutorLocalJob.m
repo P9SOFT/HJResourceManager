@@ -13,7 +13,7 @@
 #import "HJResourceRemakerProtocol.h"
 #import "HJResourceExecutorLocalJob.h"
 
-@interface HJResourceExecutorLocalJob (HJResourceExecutorLocalJobPrivate)
+@interface HJResourceExecutorLocalJob ()
 
 - (BOOL)checkValidationOfFileWithExpireTimeInterval:(NSTimeInterval)expireTimeInterval forFilePath:(NSString *)filePath;
 - (NSUInteger)amountSizeOfPath:(NSString *)path;
@@ -84,7 +84,7 @@
 
 - (BOOL)checkValidationOfFileWithExpireTimeInterval:(NSTimeInterval)expireTimeInterval forFilePath:(NSString *)filePath
 {
-    if( [filePath length] == 0 ) {
+    if( filePath.length == 0 ) {
         return NO;
     }
     
@@ -92,7 +92,7 @@
     if( attribute == nil ) {
         return NO;
     }
-    NSDate *createDate = [attribute objectForKey:NSFileCreationDate];
+    NSDate *createDate = attribute[NSFileCreationDate];
     if( createDate == nil ) {
         return YES;
     }
@@ -106,11 +106,11 @@
 
 - (NSUInteger)amountSizeOfPath:(NSString *)path
 {
-    if( [path length] == 0 ) {
+    if( path.length == 0 ) {
         return 0;
     }
     NSArray *fileNames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:nil];
-    if( [fileNames count] == 0 ) {
+    if( fileNames.count == 0 ) {
         return 0;
     }
     
@@ -121,10 +121,10 @@
         }
         NSString *filePath = [path stringByAppendingPathComponent:fileName];
         NSDictionary *attribute = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
-        if( [[attribute objectForKey:NSFileType] isEqualToString:NSFileTypeDirectory] == YES ) {
+        if( [attribute[NSFileType] isEqualToString:NSFileTypeDirectory] == YES ) {
             amountSize += [self amountSizeOfPath:filePath];
-        } else if( [[attribute objectForKey:NSFileType] isEqualToString:NSFileTypeRegular] == YES ) {
-            amountSize += [[attribute objectForKey:NSFileSize] unsignedIntegerValue];
+        } else if( [attribute[NSFileType] isEqualToString:NSFileTypeRegular] == YES ) {
+            amountSize += [attribute[NSFileSize] unsignedIntegerValue];
         }
     }
     
@@ -151,7 +151,7 @@
 - (void)loadResourceWithQuery:(id)anQuery
 {
     NSString *resourcePath = [anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyResourcePath];
-    if( [resourcePath length] == 0 ) {
+    if( resourcePath.length == 0 ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInvalidParameter]];
         return;
     }
@@ -170,7 +170,7 @@
     id remakerParameter = [anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyRemakerParameter];
     NSNumber *expireTimeIntervalNumber = [anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyExpireTimeInterval];
     if( expireTimeIntervalNumber != nil ) {
-        if( [self checkValidationOfFileWithExpireTimeInterval:(NSTimeInterval)[expireTimeIntervalNumber unsignedIntegerValue] forFilePath:originalFilePath] == NO ) {
+        if( [self checkValidationOfFileWithExpireTimeInterval:(NSTimeInterval)expireTimeIntervalNumber.unsignedIntegerValue forFilePath:originalFilePath] == NO ) {
             if( [[NSFileManager defaultManager] removeItemAtPath:resourcePath error:nil] == NO ) {
                 [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInternalError]];
                 return;
@@ -188,7 +188,7 @@
     } else {
         NSString *remakerFilePath;
         NSString *subIdentifier = [remaker subIdentifierForParameter:remakerParameter];
-        if( [subIdentifier length] > 0 ) {
+        if( subIdentifier.length > 0 ) {
             remakerFilePath = [resourcePath stringByAppendingPathComponent:[NSString stringWithFormat:@"%@_%@", [remaker identifier], subIdentifier]];
         } else {
             remakerFilePath = [resourcePath stringByAppendingPathComponent:[remaker identifier]];
@@ -247,7 +247,7 @@
         return;
     }
     [result setParametersFromDictionary:[anQuery paramDict]];
-    [result setParameter:[NSNumber numberWithInt:HJResourceExecutorLocalJobStatusLoaded] forKey:HJResourceExecutorLocalJobParameterKeyStatus];
+    [result setParameter:@(HJResourceExecutorLocalJobStatusLoaded) forKey:HJResourceExecutorLocalJobParameterKeyStatus];
     [result setParameter:dataObject forKey:HJResourceExecutorLocalJobParameterKeyDataObject];
     [self storeResult:result];
 }
@@ -255,7 +255,7 @@
 - (void)updateResourceWithQuery:(id)anQuery
 {
     NSString *resourcePath = [anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyResourcePath];
-    if( [resourcePath length] == 0 ) {
+    if( resourcePath.length == 0 ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInvalidParameter]];
         return;
     }
@@ -321,7 +321,7 @@
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInternalError]];
         return;
     }
-    if( ([mimeType length] > 0) && ([mimeTypeFilePath length] > 0) ) {
+    if( (mimeType.length > 0) && (mimeTypeFilePath.length > 0) ) {
         [mimeType writeToFile:mimeTypeFilePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
     }
     
@@ -331,14 +331,14 @@
         return;
     }
     [result setParametersFromDictionary:[anQuery paramDict]];
-    [result setParameter:[NSNumber numberWithInt:HJResourceExecutorLocalJobStatusUpdated] forKey:HJResourceExecutorLocalJobParameterKeyStatus];
+    [result setParameter:@(HJResourceExecutorLocalJobStatusUpdated) forKey:HJResourceExecutorLocalJobParameterKeyStatus];
     [self storeResult:result];
 }
 
 - (void)removeResourceByPathWithQuery:(id)anQuery
 {
     NSString *resourcePath = [anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyResourcePath];
-    if( [resourcePath length] == 0 ) {
+    if( resourcePath.length == 0 ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInvalidParameter]];
         return;
     }
@@ -354,7 +354,7 @@
         return;
     }
     [result setParametersFromDictionary:[anQuery paramDict]];
-    [result setParameter:[NSNumber numberWithInt:HJResourceExecutorLocalJobStatusRemoved] forKey:HJResourceExecutorLocalJobParameterKeyStatus];
+    [result setParameter:@(HJResourceExecutorLocalJobStatusRemoved) forKey:HJResourceExecutorLocalJobParameterKeyStatus];
     [self storeResult:result];
 }
 
@@ -362,13 +362,13 @@
 {
     NSString *repositoryPath = [anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyRepositoryPath];
     NSTimeInterval expireTimeInterval = (NSTimeInterval)[[anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyExpireTimeInterval] doubleValue];
-    if( [repositoryPath length] == 0 ) {
+    if( repositoryPath.length == 0 ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInvalidParameter]];
         return;
     }
     
     NSArray *fileNames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:repositoryPath error:nil];
-    if( [fileNames count] == 0 ) {
+    if( fileNames.count == 0 ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInternalError]];
         return;
     }
@@ -379,11 +379,11 @@
         }
         NSString *filePath = [repositoryPath stringByAppendingPathComponent:fileName];
         NSDictionary *attribute = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
-        NSDate *creationDate = [attribute objectForKey:NSFileCreationDate];
+        NSDate *creationDate = attribute[NSFileCreationDate];
         if( creationDate == nil ) {
             continue;
         }
-        if( [creationDate timeIntervalSinceNow] <= -expireTimeInterval ) {
+        if( creationDate.timeIntervalSinceNow <= -expireTimeInterval ) {
             if( [[NSFileManager defaultManager] removeItemAtPath:filePath error: nil] == NO ) {
                 [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInternalError]];
                 return;
@@ -397,7 +397,7 @@
         return;
     }
     [result setParametersFromDictionary:[anQuery paramDict]];
-    [result setParameter:[NSNumber numberWithInt:HJResourceExecutorLocalJobStatusRemoved] forKey:HJResourceExecutorLocalJobParameterKeyStatus];
+    [result setParameter:@(HJResourceExecutorLocalJobStatusRemoved) forKey:HJResourceExecutorLocalJobParameterKeyStatus];
     [self storeResult:result];
 }
 
@@ -405,7 +405,7 @@
 {
     NSString *repositoryPath = [anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyRepositoryPath];
     NSUInteger boundarySize = [[anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyBoundarySize] unsignedIntegerValue];
-    if( [repositoryPath length] == 0 ) {
+    if( repositoryPath.length == 0 ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInvalidParameter]];
         return;
     }
@@ -413,20 +413,20 @@
     
     if( boundarySize < amountSize ) {
         NSArray *fileNames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:repositoryPath error:nil];
-        if( [fileNames count] == 0 ) {
+        if( fileNames.count == 0 ) {
             [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInternalError]];
             return;
         }
         NSMutableArray *sortedFileNames = [[NSMutableArray alloc] initWithArray:fileNames];
-        if( [sortedFileNames count] == 0 ) {
+        if( sortedFileNames.count == 0 ) {
             [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInternalError]];
             return;
         }
         [sortedFileNames sortUsingComparator:^NSComparisonResult(id _Nonnull fileNameA, id _Nonnull fileNameB) {
             NSString *pathA = [repositoryPath stringByAppendingPathComponent:(NSString *)fileNameA];
             NSString *pathB = [repositoryPath stringByAppendingPathComponent:(NSString *)fileNameB];
-            NSDate *dateA = [[[NSFileManager defaultManager] attributesOfItemAtPath:pathA error:nil] objectForKey:NSFileCreationDate];
-            NSDate *dateB = [[[NSFileManager defaultManager] attributesOfItemAtPath:pathB error:nil] objectForKey:NSFileCreationDate];
+            NSDate *dateA = [[NSFileManager defaultManager] attributesOfItemAtPath:pathA error:nil][NSFileCreationDate];
+            NSDate *dateB = [[NSFileManager defaultManager] attributesOfItemAtPath:pathB error:nil][NSFileCreationDate];
             return [dateA compare:dateB];
         }];
         for( NSString *fileName in sortedFileNames ) {
@@ -452,20 +452,20 @@
         return;
     }
     [result setParametersFromDictionary:[anQuery paramDict]];
-    [result setParameter:[NSNumber numberWithInt:HJResourceExecutorLocalJobStatusRemoved] forKey:HJResourceExecutorLocalJobParameterKeyStatus];
+    [result setParameter:@(HJResourceExecutorLocalJobStatusRemoved) forKey:HJResourceExecutorLocalJobParameterKeyStatus];
     [self storeResult:result];
 }
 
 - (void)removeAllResourcesWithQuery:(id)anQuery
 {
     NSString *repositoryPath = [anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyRepositoryPath];
-    if( [repositoryPath length] == 0 ) {
+    if( repositoryPath.length == 0 ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInvalidParameter]];
         return;
     }
     
     NSArray *fileNames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:repositoryPath error:nil];
-    if( [fileNames count] == 0 ) {
+    if( fileNames.count == 0 ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInternalError]];
         return;
     }
@@ -487,14 +487,14 @@
         return;
     }
     [result setParametersFromDictionary:[anQuery paramDict]];
-    [result setParameter:[NSNumber numberWithInt:HJResourceExecutorLocalJobStatusRemoved] forKey:HJResourceExecutorLocalJobParameterKeyStatus];
+    [result setParameter:@(HJResourceExecutorLocalJobStatusRemoved) forKey:HJResourceExecutorLocalJobParameterKeyStatus];
     [self storeResult:result];
 }
 
 - (void)amountItemSizeWithQuery:(id)anQuery
 {
     NSString *resourcePath = [anQuery parameterForKey:HJResourceExecutorLocalJobParameterKeyResourcePath];
-    if( [resourcePath length] == 0 ) {
+    if( resourcePath.length == 0 ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorLocalJobStatusInvalidParameter]];
         return;
     }
@@ -507,7 +507,7 @@
         return;
     }
     [result setParametersFromDictionary:[anQuery paramDict]];
-    [result setParameter:[NSNumber numberWithInt:HJResourceExecutorLocalJobStatusCalculated] forKey:HJResourceExecutorLocalJobParameterKeyStatus];
+    [result setParameter:@(HJResourceExecutorLocalJobStatusCalculated) forKey:HJResourceExecutorLocalJobParameterKeyStatus];
     [result setParameter:@(amountSize) forKey:HJResourceExecutorLocalJobParameterKeyDataObject];
     [self storeResult:result];
 }

@@ -18,11 +18,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?) -> Bool {
         // Override point for customization after application launch.
         
-        Hydra.default().addCommonWorker()
+        Hydra.default()?.addCommonWorker()
         let repositoryPath:String = NSSearchPathForDirectoriesInDomains(.documentationDirectory, .userDomainMask, true)[0] + "/rsrc_repo"
-        HJResourceManager.default().standby(withRepositoryPath: repositoryPath, localJobWorkerName: HydraCommonWorkerName, remoteJobWorkerName: HydraCommonWorkerName)
-        HJResourceManager.default().bind(toHydra: Hydra.default())
-        Hydra.default().startAllWorkers()
+        HJResourceManager.default()?.standby(withRepositoryPath: repositoryPath, localJobWorkerName: HydraCommonWorkerName, remoteJobWorkerName: HydraCommonWorkerName)
+        HJResourceManager.default()?.bind(toHydra: Hydra.default())
+        Hydra.default()?.startAllWorkers()
         
         return true
     }

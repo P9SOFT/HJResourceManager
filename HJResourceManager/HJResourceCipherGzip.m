@@ -13,11 +13,18 @@
 
 int32_t g_HJResourceCipherGzip_last_issuedId;
 
+@interface HJResourceCipherGzip()
+{
+    int32_t     _issuedId;
+    NSUInteger  _readBufferSize;
+}
+@end
+
 @implementation HJResourceCipherGzip
 
 @dynamic readBufferSize;
 
-- (id)init
+- (instancetype)init
 {
     if( (self = [super init]) != nil ) {
         _readBufferSize = kMinimumReadBufferSize;
@@ -42,7 +49,7 @@ int32_t g_HJResourceCipherGzip_last_issuedId;
 {
     NSString *tempFilePath;
     
-    if( [anData length] <= 0 ) {
+    if( anData.length <= 0 ) {
         return nil;
     }
     
@@ -62,7 +69,7 @@ int32_t g_HJResourceCipherGzip_last_issuedId;
 {
     NSString *tempFilePath;
     
-    if( [anData length] <= 0 ) {
+    if( anData.length <= 0 ) {
         return nil;
     }
     
@@ -81,14 +88,14 @@ int32_t g_HJResourceCipherGzip_last_issuedId;
 {
     gzFile gzp;
     
-    if( ([anData length] <= 0) || ([path length] <= 0) ) {
+    if( (anData.length <= 0) || (path.length <= 0) ) {
         return NO;
     }
     
-    if( (gzp = gzopen([path UTF8String], "wb")) == NULL ) {
+    if( (gzp = gzopen(path.UTF8String, "wb")) == NULL ) {
         return NO;
     }
-    if( gzwrite(gzp, [anData bytes], (unsigned int)[anData length]) < 0 ) {
+    if( gzwrite(gzp, anData.bytes, (unsigned int)anData.length) < 0 ) {
         gzclose(gzp);
         return NO;
     }
@@ -105,14 +112,14 @@ int32_t g_HJResourceCipherGzip_last_issuedId;
     unsigned char   *plook;
     gzFile          gzp;
     
-    if( [path length] <= 0 ) {
+    if( path.length <= 0 ) {
         return nil;
     }
     
     if( _readBufferSize < kMinimumReadBufferSize ) {
         _readBufferSize = kMinimumReadBufferSize;
     }
-    if( (gzp = gzopen([path UTF8String], "rb")) == NULL ) {
+    if( (gzp = gzopen(path.UTF8String, "rb")) == NULL ) {
         return nil;
     }
     if( (buffer = (unsigned char *)malloc(_readBufferSize)) == NULL ) {

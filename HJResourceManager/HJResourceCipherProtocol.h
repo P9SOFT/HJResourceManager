@@ -11,9 +11,9 @@
 
 @protocol HJResourceCipherProtocol
 
-- (NSData *)encryptData:(NSData *)anData;
-- (NSData *)decryptData:(NSData *)anData;
-- (BOOL)encryptData:(NSData *)anData toFilePath:(NSString *)path;
-- (NSData *)decryptDataFromFilePath:(NSString *)path;
+- (NSData * _Nullable)encryptData:(NSData * _Nullable)anData;
+- (NSData * _Nullable)decryptData:(NSData * _Nullable)anData;
+- (BOOL)encryptData:(NSData * _Nullable)anData toFilePath:(NSString * _Nullable)path;
+- (NSData * _Nullable)decryptDataFromFilePath:(NSString * _Nullable)path;
 
 @end

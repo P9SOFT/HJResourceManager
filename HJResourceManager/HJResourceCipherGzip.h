@@ -13,10 +13,6 @@
 #import <HJResourceManager/HJResourceCipherProtocol.h>
 
 @interface HJResourceCipherGzip : NSObject <HJResourceCipherProtocol>
-{
-    int32_t     _issuedId;
-    NSUInteger  _readBufferSize;
-}
 
 @property (nonatomic, assign) NSUInteger readBufferSize;
 

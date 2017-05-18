@@ -31,10 +31,10 @@
         return nil;
     }
     NSDictionary *dict = (NSDictionary *)anParameter;
-    NSNumber *widthNumber = [dict objectForKey:HJResourceRemakerResizeImageParameterWidthKey];
-    NSNumber *heightNumber = [dict objectForKey:HJResourceRemakerResizeImageParameterHeightKey];
-    NSNumber *scaleNumber = [dict objectForKey:HJResourceRemakerResizeImageParameterScaleKey];
-    NSString *fileFormat = [dict objectForKey:HJResourceRemakerResizeImageParameterFileFormatKey];
+    NSNumber *widthNumber = dict[HJResourceRemakerResizeImageParameterWidthKey];
+    NSNumber *heightNumber = dict[HJResourceRemakerResizeImageParameterHeightKey];
+    NSNumber *scaleNumber = dict[HJResourceRemakerResizeImageParameterScaleKey];
+    NSString *fileFormat = dict[HJResourceRemakerResizeImageParameterFileFormatKey];
     if( widthNumber == nil ) {
         widthNumber = @(0);
     }
@@ -64,16 +64,16 @@
     CGImageRef      resizedImageRef;
     BOOL            toPNG;
     
-    if( ([anData length] <= 0) || ([anParameter isKindOfClass:[NSDictionary class]] == NO) ) {
+    if( (anData.length <= 0) || ([anParameter isKindOfClass:[NSDictionary class]] == NO) ) {
         return nil;
     }
-    toPNG = [[anParameter objectForKey:HJResourceRemakerResizeImageParameterFileFormatKey] isEqualToString:@"png"];
-    resizeSize.width = (CGFloat)[[anParameter objectForKey:HJResourceRemakerResizeImageParameterWidthKey] floatValue];
-    resizeSize.height = (CGFloat)[[anParameter objectForKey:HJResourceRemakerResizeImageParameterHeightKey] floatValue];
+    toPNG = [anParameter[HJResourceRemakerResizeImageParameterFileFormatKey] isEqualToString:@"png"];
+    resizeSize.width = (CGFloat)[anParameter[HJResourceRemakerResizeImageParameterWidthKey] floatValue];
+    resizeSize.height = (CGFloat)[anParameter[HJResourceRemakerResizeImageParameterHeightKey] floatValue];
     if( (resizeSize.width <= 0.0f) && (resizeSize.height <= 0.0f) ) {
         return anData;
     }
-    scale = (CGFloat)[[anParameter objectForKey:HJResourceRemakerResizeImageParameterScaleKey] floatValue];
+    scale = (CGFloat)[anParameter[HJResourceRemakerResizeImageParameterScaleKey] floatValue];
     if( scale == 0.0 ) {
         scale = [UIScreen mainScreen].scale;
     }

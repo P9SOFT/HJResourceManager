@@ -138,12 +138,12 @@
 - (void)postNotifyWithStatus:(HJResourceManagerRequestStatus)status resourceQuery:(NSDictionary *)resourceQuery resource:(id)aResource completion:(HJResourceManagerCompleteBlock)completion
 {
     NSMutableDictionary *paramDict = [NSMutableDictionary new];
-    [paramDict setObject:@((NSUInteger)status) forKey:HJResourceManagerParameterKeyRequestStatus];
+    paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSUInteger)status);
     if( resourceQuery != nil ) {
-        [paramDict setObject:resourceQuery forKey:HJResourceManagerParameterKeyResourceQuery];
+        paramDict[HJResourceManagerParameterKeyResourceQuery] = resourceQuery;
     }
     if( aResource != nil ) {
-        [paramDict setObject:aResource forKey:HJResourceManagerParameterKeyDataObject];
+        paramDict[HJResourceManagerParameterKeyDataObject] = aResource;
     }
     
     [self postNotifyWithParamDict:[NSDictionary dictionaryWithDictionary:paramDict] completion:completion];
@@ -151,12 +151,12 @@
 
 - (NSString *)requestKeyStringFromResourceQuery:(NSDictionary *)resourceQuery
 {
-    return [self hashKeyStringFromPlainString:[resourceQuery objectForKey:HJResourceQueryKeyRequestValue]];
+    return [self hashKeyStringFromPlainString:resourceQuery[HJResourceQueryKeyRequestValue]];
 }
 
 - (NSString *)hashKeyStringFromPlainString:(NSString *)plainString
 {
-    if( [plainString length] == 0 ) {
+    if( plainString.length == 0 ) {
         return nil;
     }
     
@@ -164,12 +164,12 @@
     
     [_lockForHashKeyDict lock];
     
-    if( (hashKeyString = [_loadedHashKeyDict objectForKey:plainString]) == nil ) {
+    if( (hashKeyString = _loadedHashKeyDict[plainString]) == nil ) {
         
         const char *utf8buffer;
         unsigned char pattern[16];
         
-        if( (utf8buffer = [plainString UTF8String]) != NULL ) {
+        if( (utf8buffer = plainString.UTF8String) != NULL ) {
             CC_MD5(utf8buffer, (CC_LONG)strlen(utf8buffer), pattern);
             hashKeyString = [NSString stringWithFormat:@"%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X",
                              pattern[0], pattern[1], pattern[2], pattern[3], pattern[4], pattern[5], pattern[6], pattern[7],
@@ -178,8 +178,8 @@
         } else {
             hashKeyString = nil;
         }
-        if( [hashKeyString length] > 0 ) {
-            [_loadedHashKeyDict setObject:hashKeyString forKey:plainString];
+        if( hashKeyString.length > 0 ) {
+            _loadedHashKeyDict[plainString] = hashKeyString;
         }
         
     }
@@ -191,14 +191,14 @@
 
 - (BOOL)isRemoteResource:(NSString *)requestValue
 {
-    if( [requestValue length] < 8 ) {
+    if( requestValue.length < 8 ) {
         return NO;
     }
     
     if( [requestValue rangeOfString:@"http://"].location == 0 ) {
         return YES;
     }
-    if( [requestValue length] >= 9 ) {
+    if( requestValue.length >= 9 ) {
         if( [requestValue rangeOfString:@"https://"].location == 0 ) {
             return YES;
         }
@@ -226,18 +226,18 @@
 
 - (id)resourceFromMemoryCacheForKey:(NSString *)resourceKey
 {
-    if( [resourceKey length] == 0 ) {
+    if( resourceKey.length == 0 ) {
         return nil;
     }
     
     id aResource = nil;
     
     [_lockForResourceDict lock];
-    if( (aResource = [_loadedResourceDict objectForKey:resourceKey]) != nil ) {
-        NSUInteger count = [_referenceOrder count];
+    if( (aResource = _loadedResourceDict[resourceKey]) != nil ) {
+        NSUInteger count = _referenceOrder.count;
         NSUInteger i;
         for( i=0 ; i<count ; ++i ) {
-            if( [[_referenceOrder objectAtIndex:i] isEqualToString:resourceKey] == YES ) {
+            if( [_referenceOrder[i] isEqualToString:resourceKey] == YES ) {
                 if( i != 0 ) {
                     [_referenceOrder removeObjectAtIndex:i];
                     [_referenceOrder insertObject:resourceKey atIndex:0];
@@ -253,12 +253,12 @@
 
 - (void)setResourceToMemoryCache:(id)aResource forKey:(NSString *)resourceKey
 {
-    if( (aResource == nil) || ([resourceKey length] == 0) ) {
+    if( (aResource == nil) || (resourceKey.length == 0) ) {
         return;
     }
     
     [_lockForResourceDict lock];
-    [_loadedResourceDict setObject:aResource forKey:resourceKey];
+    _loadedResourceDict[resourceKey] = aResource;
     [_referenceOrder addObject:resourceKey];
     _usedMemorySize += [self sizeOfResource:aResource];
     [_lockForResourceDict unlock];
@@ -268,14 +268,14 @@
 
 - (void)removeResourceFromMemoryCacheForKey:(NSString *)resourceKey
 {
-    if( [resourceKey length] == 0 ) {
+    if( resourceKey.length == 0 ) {
         return;
     }
     
     id aResource;
     
     [_lockForResourceDict lock];
-    if( (aResource = [_loadedResourceDict objectForKey:resourceKey]) != nil ) {
+    if( (aResource = _loadedResourceDict[resourceKey]) != nil ) {
         NSUInteger size = [self sizeOfResource:aResource];
         if( _usedMemorySize > size ) {
             _usedMemorySize -= size;
@@ -283,10 +283,10 @@
             _usedMemorySize = 0;
         }
         [_loadedResourceDict removeObjectForKey:resourceKey];
-        NSUInteger count = [_referenceOrder count];
+        NSUInteger count = _referenceOrder.count;
         NSUInteger i;
         for( i=0 ; i<count ; ++i ) {
-            if( [[_referenceOrder objectAtIndex:i] isEqualToString:resourceKey] == YES ) {
+            if( [_referenceOrder[i] isEqualToString:resourceKey] == YES ) {
                 [_referenceOrder removeObjectAtIndex:i];
                 break;
             }
@@ -302,9 +302,9 @@
     }
     
     [_lockForResourceDict lock];
-    while( [_referenceOrder count] > 0 ) {
-        NSString *resourceKey = [_referenceOrder lastObject];
-        NSUInteger size = [self sizeOfResource:[_loadedResourceDict objectForKey:resourceKey]];
+    while( _referenceOrder.count > 0 ) {
+        NSString *resourceKey = _referenceOrder.lastObject;
+        NSUInteger size = [self sizeOfResource:_loadedResourceDict[resourceKey]];
         [_loadedResourceDict removeObjectForKey:resourceKey];
         [_referenceOrder removeLastObject];
         if( _usedMemorySize > size ) {
@@ -322,7 +322,7 @@
 - (void)executeCompletionResult:(HYResult *)result withParamDict:(NSMutableDictionary *)paramDict forResourceQuery:(NSDictionary *)resourceQuery
 {
     NSString *requestKey = [self requestKeyStringFromResourceQuery:resourceQuery];
-    if( [requestKey length] == 0 ) {
+    if( requestKey.length == 0 ) {
         return;
     }
     
@@ -330,25 +330,25 @@
     NSArray *remakingWaiters = nil;
     
     [_lockForResourceDict lock];
-    if( [_requestingResourceKeyDict objectForKey:requestKey] != nil ) {
-        requestingWaiters = [NSArray arrayWithArray:[_requestingResourceKeyDict objectForKey:requestKey]];
+    if( _requestingResourceKeyDict[requestKey] != nil ) {
+        requestingWaiters = [NSArray arrayWithArray:_requestingResourceKeyDict[requestKey]];
         [_requestingResourceKeyDict removeObjectForKey:requestKey];
     }
-    if( [_remakingResourceKeyDict objectForKey:requestKey] != nil ) {
-        remakingWaiters = [NSArray arrayWithArray:[_remakingResourceKeyDict objectForKey:requestKey]];
+    if( _remakingResourceKeyDict[requestKey] != nil ) {
+        remakingWaiters = [NSArray arrayWithArray:_remakingResourceKeyDict[requestKey]];
         [_remakingResourceKeyDict removeObjectForKey:requestKey];
     }
     [_lockForResourceDict unlock];
     
     for( NSDictionary *waiterDict in remakingWaiters ) {
-        NSDictionary *currentResourceQuery = [waiterDict objectForKey:kResourceQueryKey];
-        BOOL cutInLine = [[waiterDict objectForKey:kCutInLineKey] boolValue];
-        HJResourceManagerCompleteBlock completion = [waiterDict objectForKey:kCompletionBlockKey];
+        NSDictionary *currentResourceQuery = waiterDict[kResourceQueryKey];
+        BOOL cutInLine = [waiterDict[kCutInLineKey] boolValue];
+        HJResourceManagerCompleteBlock completion = waiterDict[kCompletionBlockKey];
         [self resourceForQuery:currentResourceQuery cutInLine:cutInLine completion:completion];
     }
     
     for( NSDictionary *waiterDict in requestingWaiters ) {
-        HJResourceManagerCompleteBlock completion = [waiterDict objectForKey:kCompletionBlockKey];
+        HJResourceManagerCompleteBlock completion = waiterDict[kCompletionBlockKey];
         if( completion != nil ) {
             completion([NSDictionary dictionaryWithDictionary:paramDict]);
         }
@@ -367,7 +367,7 @@
     NSString *resourcePath = [result parameterForKey:HJResourceExecutorLocalJobParameterKeyResourcePath];
     NSDictionary *resourceQuery = [result parameterForKey:HJResourceManagerParameterKeyResourceQuery];
     NSString *resourceKey = [self resourceKeyStringFromResourceQuery:resourceQuery];
-    NSString *requestValue = [resourceQuery objectForKey:HJResourceQueryKeyRequestValue];
+    NSString *requestValue = resourceQuery[HJResourceQueryKeyRequestValue];
     HYQuery *query = nil;
     HJResourceManagerCompleteBlock completion = nil;
     NSMutableDictionary *paramDict = [NSMutableDictionary new];
@@ -375,7 +375,7 @@
         return nil;
     }
     if( resourceQuery != nil ) {
-        [paramDict setObject:resourceQuery forKey:HJResourceManagerParameterKeyResourceQuery];
+        paramDict[HJResourceManagerParameterKeyResourceQuery] = resourceQuery;
     }
     
     switch( operation ) {
@@ -385,7 +385,7 @@
                 case HJResourceExecutorLocalJobStatusFileNotFound :
                     if( ([[result parameterForKey:HJResourceManagerParameterKeyRemoteResourceFlag] boolValue] == YES) && ([result parameterForKey:HJResourceExecutorRemoteJobParameterKeyResourceUrl] == nil) ) {
                         if( (query = [self queryForExecutorName:HJResourceExecutorRemoteJobName]) != nil ) {
-                            [query setParametersFromDictionary:[result paramDict]];
+                            [query setParametersFromDictionary:result.paramDict];
                             [query setParameter:@((NSInteger)HJResourceExecutorRemoteJobOperationRequest) forKey:HJResourceExecutorRemoteJobParameterKeyOperation];
                             [query setParameter:requestValue forKey:HJResourceExecutorRemoteJobParameterKeyResourceUrl];
                             [query setParameter:resourcePath forKey:HJResourceExecutorRemoteJobParameterKeyResourcePath];
@@ -394,28 +394,28 @@
                             return nil;
                         }
                     }
-                    [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoadFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
+                    paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusLoadFailed);
                     break;
                 case HJResourceExecutorLocalJobStatusLoaded :
                     if( dataObject != nil ) {
-                        [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoaded) forKey:HJResourceManagerParameterKeyRequestStatus];
-                        [paramDict setObject:dataObject forKey:HJResourceManagerParameterKeyDataObject];
+                        paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusLoaded);
+                        paramDict[HJResourceManagerParameterKeyDataObject] = dataObject;
                         [self setResourceToMemoryCache:dataObject forKey:resourceKey];
                     } else {
-                        [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoadFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
+                        paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusLoadFailed);
                     }
                     break;
                 default :
-                    [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoadFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
+                    paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusLoadFailed);
                     break;
             }
             [self executeCompletionResult:result withParamDict:paramDict forResourceQuery:resourceQuery];
             break;
         case HJResourceExecutorLocalJobOperationUpdate :
             if( status == HJResourceExecutorLocalJobStatusUpdated ) {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusUpdated) forKey:HJResourceManagerParameterKeyRequestStatus];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusUpdated);
             } else {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusUpdateFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusUpdateFailed);
             }
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
                 completion([NSDictionary dictionaryWithDictionary:paramDict]);
@@ -426,9 +426,9 @@
         case HJResourceExecutorLocalJobOperationRemoveByBoundarySize :
         case HJResourceExecutorLocalJobOperationRemoveAll :
             if( status == HJResourceExecutorLocalJobStatusRemoved ) {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusRemoved) forKey:HJResourceManagerParameterKeyRequestStatus];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusRemoved);
             } else {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusRemoveFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusRemoveFailed);
             }
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
                 completion([NSDictionary dictionaryWithDictionary:paramDict]);
@@ -436,24 +436,24 @@
             break;
         case HJResourceExecutorLocalJobOperationAmountSize :
             if( (status == HJResourceExecutorLocalJobStatusCalculated) && (dataObject != nil) ) {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusCalculated) forKey:HJResourceManagerParameterKeyRequestStatus];
-                [paramDict setObject:dataObject forKey:HJResourceManagerParameterKeyDataObject];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusCalculated);
+                paramDict[HJResourceManagerParameterKeyDataObject] = dataObject;
             } else {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusCalculateFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusCalculateFailed);
             }
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
                 completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
             break;
         default :
-            [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusUnknownError) forKey:HJResourceManagerParameterKeyRequestStatus];
+            paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusUnknownError);
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
                 completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
             break;
     }
     
-    if( [paramDict count] == 0 ) {
+    if( paramDict.count == 0 ) {
         return nil;
     }
     
@@ -476,52 +476,52 @@
         return nil;
     }
     if( resourceQuery != nil ) {
-        [paramDict setObject:resourceQuery forKey:HJResourceManagerParameterKeyResourceQuery];
+        paramDict[HJResourceManagerParameterKeyResourceQuery] = resourceQuery;
     }
     HJResourceManagerCompleteBlock completion = nil;
     
     switch( operation ) {
         case HJResourceExecutorRemoteJobOperationRequest :
             if( asyncHttpDelivererIssuedId != nil ) {
-                [paramDict setObject:asyncHttpDelivererIssuedId forKey:HJResourceManagerParameterKeyAsyncHttpDelivererIssuedId];
+                paramDict[HJResourceManagerParameterKeyAsyncHttpDelivererIssuedId] = asyncHttpDelivererIssuedId;
             }
             if( status == HJResourceExecutorRemoteJobStatusRequested ) {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusDownloadStarted) forKey:HJResourceManagerParameterKeyRequestStatus];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusDownloadStarted);
             } else {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoadFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusLoadFailed);
                 [self executeCompletionResult:result withParamDict:paramDict forResourceQuery:resourceQuery];
             }
             break;
         case HJResourceExecutorRemoteJobOperationReceive :
             if( asyncHttpDelivererIssuedId != nil ) {
-                [paramDict setObject:asyncHttpDelivererIssuedId forKey:HJResourceManagerParameterKeyAsyncHttpDelivererIssuedId];
+                paramDict[HJResourceManagerParameterKeyAsyncHttpDelivererIssuedId] = asyncHttpDelivererIssuedId;
             }
             if( (status == HJResourceExecutorRemoteJobStatusReceived) && ((query = [self queryForExecutorName:HJResourceExecutorLocalJobName]) != nil) ) {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusDownloaded) forKey:HJResourceManagerParameterKeyRequestStatus];
-                [query setParametersFromDictionary:[result paramDict]];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusDownloaded);
+                [query setParametersFromDictionary:result.paramDict];
                 [query setParameter:@((NSInteger)HJResourceExecutorLocalJobOperationLoad) forKey:HJResourceExecutorLocalJobParameterKeyOperation];
                 [[Hydra defaultHydra] pushQuery:query];
             } else {
-                [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusLoadFailed) forKey:HJResourceManagerParameterKeyRequestStatus];
+                paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusLoadFailed);
                 [self executeCompletionResult:result withParamDict:paramDict forResourceQuery:resourceQuery];
             }
             break;
         default :
-            [paramDict setObject:@((NSInteger)HJResourceManagerRequestStatusUnknownError) forKey:HJResourceManagerParameterKeyRequestStatus];
+            paramDict[HJResourceManagerParameterKeyRequestStatus] = @((NSInteger)HJResourceManagerRequestStatusUnknownError);
             if( (completion = [result parameterForKey:HJResourceManagerParameterKeyCompleteBlock]) != nil ) {
                 completion([NSDictionary dictionaryWithDictionary:paramDict]);
             }
             break;
     }
     
-    if( [paramDict count] == 0 ) {
+    if( paramDict.count == 0 ) {
         return nil;
     }
     
     return paramDict;
 }
 
-+ (HJResourceManager *)defaultManager
++ (HJResourceManager *)defaultHJResourceManager
 {
     static dispatch_once_t once;
     static HJResourceManager *sharedInstance;
@@ -531,7 +531,7 @@
 
 - (BOOL)standbyWithRepositoryPath:(NSString *)repositoryPath localJobWorkerName:(NSString *)localJobWorkerName remoteJobWorkerName:(NSString *)remoteJobWorkerName
 {
-    if( (self.standby == YES) || ([repositoryPath length] == 0) ) {
+    if( (self.standby == YES) || (repositoryPath.length == 0) ) {
         return NO;
     }
     
@@ -547,8 +547,8 @@
         }
     }
     
-    if( [[repositoryPath substringFromIndex:[repositoryPath length]-1] isEqualToString:@"/"] == YES ) {
-        repositoryPath = [repositoryPath substringToIndex:[repositoryPath length]-1];
+    if( [[repositoryPath substringFromIndex:repositoryPath.length-1] isEqualToString:@"/"] == YES ) {
+        repositoryPath = [repositoryPath substringToIndex:repositoryPath.length-1];
     }
     
     _repositoryPath = [repositoryPath copy];
@@ -610,14 +610,14 @@
 
 - (id)cipherForName:(NSString *)name
 {
-    if( (self.standby == NO) || ([name length] == 0) ) {
+    if( (self.standby == NO) || (name.length == 0) ) {
         return nil;
     }
     
     id cipher;
     
     [_lockForSupportDict lock];
-    cipher = [_cipherDict objectForKey:name];
+    cipher = _cipherDict[name];
     [_lockForSupportDict unlock];
     
     return cipher;
@@ -625,12 +625,12 @@
 
 - (BOOL)setCipher:(id)cipher forName:(NSString *)name
 {
-    if( (self.standby == NO) || ([cipher conformsToProtocol:@protocol(HJResourceCipherProtocol)] == NO) || ([name length] == 0) ) {
+    if( (self.standby == NO) || ([cipher conformsToProtocol:@protocol(HJResourceCipherProtocol)] == NO) || (name.length == 0) ) {
         return NO;
     }
     
     [_lockForSupportDict lock];
-    [_cipherDict setObject:cipher forKey:name];
+    _cipherDict[name] = cipher;
     [_lockForSupportDict unlock];
     
     return YES;
@@ -638,7 +638,7 @@
 
 - (void)removeCipherForName:(NSString *)name
 {
-    if( (self.standby == NO) || ([name length] == 0) ) {
+    if( (self.standby == NO) || (name.length == 0) ) {
         return;
     }
     
@@ -660,14 +660,14 @@
 
 - (NSData *)encryptData:(NSData *)anData forName:(NSString *)name
 {
-    if( (self.standby == NO) || ([anData length] == 0) || ([name length] == 0) ) {
+    if( (self.standby == NO) || (anData.length == 0) || (name.length == 0) ) {
         return nil;
     }
     
     id cipher;
     
     [_lockForSupportDict lock];
-    cipher = [_cipherDict objectForKey:name];
+    cipher = _cipherDict[name];
     [_lockForSupportDict unlock];
     
     return [cipher encryptData:anData];
@@ -675,14 +675,14 @@
 
 - (NSData *)decryptData:(NSData *)anData forName:(NSString *)name
 {
-    if( (self.standby == NO) || ([anData length] == 0) || ([name length] == 0) ) {
+    if( (self.standby == NO) || (anData.length == 0) || (name.length == 0) ) {
         return nil;
     }
     
     id cipher;
     
     [_lockForSupportDict lock];
-    cipher = [_cipherDict objectForKey:name];
+    cipher = _cipherDict[name];
     [_lockForSupportDict unlock];
     
     return [cipher decryptData:anData];
@@ -690,14 +690,14 @@
 
 - (BOOL)encryptData:(NSData *)anData toFilePath:(NSString *)filePath forName:(NSString *)name
 {
-    if( (self.standby == NO) || ([anData length] == 0) || ([filePath length] == 0) || ([name length] == 0) ) {
+    if( (self.standby == NO) || (anData.length == 0) || (filePath.length == 0) || (name.length == 0) ) {
         return NO;
     }
     
     id cipher;
     
     [_lockForSupportDict lock];
-    cipher = [_cipherDict objectForKey:name];
+    cipher = _cipherDict[name];
     [_lockForSupportDict unlock];
     
     return [cipher encryptData:anData toFilePath:filePath];
@@ -705,14 +705,14 @@
 
 - (NSData *)decryptDataFromFilePath:(NSString *)filePath forName:(NSString *)name
 {
-    if( (self.standby == NO) || ([filePath length] == 0) || ([name length] == 0) ) {
+    if( (self.standby == NO) || (filePath.length == 0) || (name.length == 0) ) {
         return nil;
     }
     
     id cipher;
     
     [_lockForSupportDict lock];
-    cipher = [_cipherDict objectForKey:name];
+    cipher = _cipherDict[name];
     [_lockForSupportDict unlock];
     
     return [cipher decryptDataFromFilePath:filePath];
@@ -720,14 +720,14 @@
 
 - (id)remakerForName:(NSString *)name
 {
-    if( (self.standby == NO) || ([name length] == 0) ) {
+    if( (self.standby == NO) || (name.length == 0) ) {
         return nil;
     }
     
     id remaker;
     
     [_lockForSupportDict lock];
-    remaker = [_remakerDict objectForKey:name];
+    remaker = _remakerDict[name];
     [_lockForSupportDict unlock];
     
     return remaker;
@@ -735,7 +735,7 @@
 
 - (BOOL)setRemaker:(id)remaker forName:(NSString *)name
 {
-    if( (self.standby == NO) || ([remaker conformsToProtocol:@protocol(HJResourceRemakerProtocol)] == NO) || ([name length] == 0) ) {
+    if( (self.standby == NO) || ([remaker conformsToProtocol:@protocol(HJResourceRemakerProtocol)] == NO) || (name.length == 0) ) {
         return NO;
     }
     
@@ -744,7 +744,7 @@
     }
     
     [_lockForSupportDict lock];
-    [_remakerDict setObject:remaker forKey:name];
+    _remakerDict[name] = remaker;
     [_lockForSupportDict unlock];
     
     return YES;
@@ -752,7 +752,7 @@
 
 - (void)removeRemakerForName:(NSString *)name
 {
-    if( (self.standby == NO) || ([name length] == 0) ) {
+    if( (self.standby == NO) || (name.length == 0) ) {
         return;
     }
     
@@ -774,14 +774,14 @@
 
 - (NSData *)remakeData:(NSData *)anData withParameter:(id)anParameter forName:(NSString *)name
 {
-    if( (self.standby == NO) || ([anData length] == 0) || ([name length] == 0) ) {
+    if( (self.standby == NO) || (anData.length == 0) || (name.length == 0) ) {
         return nil;
     }
     
     id remaker;
     
     [_lockForSupportDict lock];
-    remaker = [_remakerDict objectForKey:name];
+    remaker = _remakerDict[name];
     [_lockForSupportDict unlock];
     
     return [remaker remakerData:anData withParameter:anParameter];
@@ -794,12 +794,12 @@
 
 - (void)resourceForQuery:(NSDictionary *)resourceQuery cutInLine:(BOOL)cutInLine completion:(HJResourceManagerCompleteBlock)completion
 {
-    if( (self.standby == NO) || ([resourceQuery objectForKey:HJResourceQueryKeyRequestValue] == nil) ) {
+    if( (self.standby == NO) || (resourceQuery[HJResourceQueryKeyRequestValue] == nil) ) {
         [self postNotifyWithStatus:HJResourceManagerRequestStatusLoadFailed resourceQuery:resourceQuery resource:nil completion:completion];
         return;
     }
     
-    NSString *requestValue = [resourceQuery objectForKey:HJResourceQueryKeyRequestValue];
+    NSString *requestValue = resourceQuery[HJResourceQueryKeyRequestValue];
     BOOL remoteResourceFalg = [self isRemoteResource:requestValue];
     NSString *resourceKey = [self resourceKeyStringFromResourceQuery:resourceQuery];
     NSString *requestKey = [self requestKeyStringFromResourceQuery:resourceQuery];
@@ -808,9 +808,9 @@
         [self postNotifyWithStatus:HJResourceManagerRequestStatusLoadFailed resourceQuery:resourceQuery resource:nil completion:completion];
         return;
     }
-    NSNumber *dataTypeNumber = [resourceQuery objectForKey:HJResourceQueryKeyDataType];
+    NSNumber *dataTypeNumber = resourceQuery[HJResourceQueryKeyDataType];
     if( dataTypeNumber != nil ) {
-        switch( (HJResourceDataType)[dataTypeNumber integerValue] ) {
+        switch( (HJResourceDataType)dataTypeNumber.integerValue ) {
             case HJResourceDataTypeSize :
                 [self postNotifyWithStatus:HJResourceManagerRequestStatusLoaded resourceQuery:resourceQuery resource:[self fileSizeFromReosurceQuery:resourceQuery] completion:completion];
                 return;
@@ -821,8 +821,8 @@
                 break;
         }
     }
-    NSNumber *imageScale = [resourceQuery objectForKey:HJResourceQueryKeyImageScale];
-    HJResourceFetchFromType fetchFromType = (HJResourceFetchFromType)[[resourceQuery objectForKey:HJResourceQueryKeyFirstFetchFrom] integerValue];
+    NSNumber *imageScale = resourceQuery[HJResourceQueryKeyImageScale];
+    HJResourceFetchFromType fetchFromType = (HJResourceFetchFromType)[resourceQuery[HJResourceQueryKeyFirstFetchFrom] integerValue];
     
     if( fetchFromType == HJResourceFetchFromTypeMemory ) {
         id aResource = [self resourceFromMemoryCacheForKey:resourceKey];
@@ -835,16 +835,16 @@
     NSMutableArray *requestingWaiters = nil;
     NSMutableArray *remakingWaiters = nil;
     [_lockForResourceDict lock];
-    if( (requestingWaiters = [_requestingResourceKeyDict objectForKey:requestKey]) != nil ) {
+    if( (requestingWaiters = _requestingResourceKeyDict[requestKey]) != nil ) {
         NSDictionary *waiter = (completion != nil) ? @{kResourceQueryKey:resourceQuery,kCutInLineKey:@(cutInLine),kCompletionBlockKey:completion} : @{kResourceQueryKey:resourceQuery,kCutInLineKey:@(cutInLine)};
-        NSString *remakerName = [resourceQuery objectForKey:HJResourceQueryKeyRemakerName];
+        NSString *remakerName = resourceQuery[HJResourceQueryKeyRemakerName];
         if( (remakerName != nil) && ([remakerName isEqualToString:HJResourceOriginalFileName] == NO) ) {
-            if( (remakingWaiters = [_remakingResourceKeyDict objectForKey:requestKey]) == nil ) {
+            if( (remakingWaiters = _remakingResourceKeyDict[requestKey]) == nil ) {
                 if( (remakingWaiters = [[NSMutableArray alloc] init]) == nil ) {
                     [_lockForResourceDict unlock];
                     [self postNotifyWithStatus:HJResourceManagerRequestStatusLoadFailed resourceQuery:resourceQuery resource:nil completion:completion];
                 }
-                [_remakingResourceKeyDict setObject:remakingWaiters forKey:requestKey];
+                _remakingResourceKeyDict[requestKey] = remakingWaiters;
             }
             [remakingWaiters addObject:waiter];
         } else {
@@ -863,24 +863,24 @@
     } else {
         [requestingWaiters addObject:@{kResourceQueryKey:resourceQuery,kCutInLineKey:@(cutInLine)}];
     }
-    [_requestingResourceKeyDict setObject:requestingWaiters forKey:requestKey];
+    _requestingResourceKeyDict[requestKey] = requestingWaiters;
     [_lockForResourceDict unlock];
     
-    NSString *cipherName = [resourceQuery objectForKey:HJResourceQueryKeyCipherName];
+    NSString *cipherName = resourceQuery[HJResourceQueryKeyCipherName];
     id cipher = nil;
-    if( [cipherName length] > 0 ) {
+    if( cipherName.length > 0 ) {
         [_lockForSupportDict lock];
-        cipher = [_cipherDict objectForKey:cipherName];
+        cipher = _cipherDict[cipherName];
         [_lockForSupportDict unlock];
     }
-    NSString *remakerName = [resourceQuery objectForKey:HJResourceQueryKeyRemakerName];
+    NSString *remakerName = resourceQuery[HJResourceQueryKeyRemakerName];
     id remaker = nil;
-    if( [remakerName length] > 0 ) {
+    if( remakerName.length > 0 ) {
         [_lockForSupportDict lock];
-        remaker = [_remakerDict objectForKey:remakerName];
+        remaker = _remakerDict[remakerName];
         [_lockForSupportDict unlock];
     }
-    id remakerParameter = [resourceQuery objectForKey:HJResourceQueryKeyRemakerParameter];
+    id remakerParameter = resourceQuery[HJResourceQueryKeyRemakerParameter];
     
     HYQuery *query = [self queryForExecutorName:HJResourceExecutorLocalJobName];
     if( query == nil ) {
@@ -897,7 +897,7 @@
     [query setParameter:cipher forKey:HJResourceExecutorLocalJobParameterKeyCipher];
     [query setParameter:remaker forKey:HJResourceExecutorLocalJobParameterKeyRemaker];
     [query setParameter:remakerParameter forKey:HJResourceExecutorLocalJobParameterKeyRemakerParameter];
-    [query setParameter:[resourceQuery objectForKey:HJResourceQueryKeyExpireTimeInterval] forKey:HJResourceExecutorLocalJobParameterKeyExpireTimeInterval];
+    [query setParameter:resourceQuery[HJResourceQueryKeyExpireTimeInterval] forKey:HJResourceExecutorLocalJobParameterKeyExpireTimeInterval];
     if( cutInLine == YES ) {
         [query setParameter:@(1) forKey:HJResourceExecutorRemoteJobParameterKeyCutInLine];
     }
@@ -926,7 +926,7 @@
         return nil;
     }
     
-    return [attribute objectForKey:NSFileCreationDate];
+    return attribute[NSFileCreationDate];
 }
 
 - (BOOL)checkValidationOfResourceWithExpireTimeInterval:(NSTimeInterval)expireTimeInterval forQuery:(NSDictionary *)resourceQuery
@@ -964,13 +964,13 @@
             return nil;
         }
         HJResourceDataType dataType = HJResourceDataTypeData;
-        NSNumber *dataTypeNumber = [resourceQuery objectForKey:HJResourceQueryKeyDataType];
+        NSNumber *dataTypeNumber = resourceQuery[HJResourceQueryKeyDataType];
         if( dataTypeNumber == nil ) {
             NSString *mimeTypeFilePath = [[self resourcePathFromResourceQuery:resourceQuery] stringByAppendingPathComponent:HJResourceMimeTypeFileName];
             NSString *mimeType = [NSString stringWithContentsOfFile:mimeTypeFilePath encoding:NSUTF8StringEncoding error:nil];
             dataType = [HJResourceCommon dataTypeFromMimeType:mimeType];
         } else {
-            dataType = (HJResourceDataType)[dataTypeNumber integerValue];
+            dataType = (HJResourceDataType)dataTypeNumber.integerValue;
         }
         NSData *data;
         switch( dataType ) {
@@ -1017,7 +1017,7 @@
 
 - (void)updateCachedResourceForQuery:(NSDictionary *)resourceQuery completion:(HJResourceManagerCompleteBlock)completion
 {
-    if( (self.standby == NO) || ([resourceQuery objectForKey:HJResourceQueryKeyRequestValue] == nil) || ([resourceQuery objectForKey:HJResourceQueryKeyDataValue] == nil) ) {
+    if( (self.standby == NO) || (resourceQuery[HJResourceQueryKeyRequestValue] == nil) || (resourceQuery[HJResourceQueryKeyDataValue] == nil) ) {
         [self postNotifyWithStatus:HJResourceManagerRequestStatusUpdateFailed resourceQuery:resourceQuery resource:nil completion:completion];
         return;
     }
@@ -1029,23 +1029,23 @@
         return;
     }
     [self removeResourceFromMemoryCacheForKey:resourceKey];
-    NSNumber *dataTypeNumber = [resourceQuery objectForKey:HJResourceQueryKeyDataType];
+    NSNumber *dataTypeNumber = resourceQuery[HJResourceQueryKeyDataType];
     if( dataTypeNumber != nil ) {
-        if( (HJResourceDataType)[dataTypeNumber integerValue] == HJResourceDataTypeSize ) {
+        if( (HJResourceDataType)dataTypeNumber.integerValue == HJResourceDataTypeSize ) {
             [self postNotifyWithStatus:HJResourceManagerRequestStatusUpdateFailed resourceQuery:resourceQuery resource:nil completion:completion];
             return;
         }
     }
-    id dataValue = [resourceQuery objectForKey:HJResourceQueryKeyDataValue];
+    id dataValue = resourceQuery[HJResourceQueryKeyDataValue];
     if( dataValue == nil ) {
         [self postNotifyWithStatus:HJResourceManagerRequestStatusUpdateFailed resourceQuery:resourceQuery resource:nil completion:completion];
         return;
     }
     id cipher = nil;
-    NSString *cipherName = [resourceQuery objectForKey:HJResourceQueryKeyCipherName];
-    if( [cipherName length] > 0 ) {
+    NSString *cipherName = resourceQuery[HJResourceQueryKeyCipherName];
+    if( cipherName.length > 0 ) {
         [_lockForSupportDict lock];
-        cipher = [_cipherDict objectForKey:cipherName];
+        cipher = _cipherDict[cipherName];
         [_lockForSupportDict unlock];
     }
     
@@ -1066,7 +1066,7 @@
 
 - (BOOL)unloadResourceForQuery:(NSDictionary *)resourceQuery
 {
-    if( (self.standby == NO) || ([resourceQuery objectForKey:HJResourceQueryKeyRequestValue] == nil) ) {
+    if( (self.standby == NO) || (resourceQuery[HJResourceQueryKeyRequestValue] == nil) ) {
         return NO;
     }
     
@@ -1096,7 +1096,7 @@
 
 - (void)removeResourceForQuery:(NSDictionary *)resourceQuery completion:(HJResourceManagerCompleteBlock)completion
 {
-    if( (self.standby == NO) || ([resourceQuery objectForKey:HJResourceQueryKeyRequestValue] == nil) ) {
+    if( (self.standby == NO) || (resourceQuery[HJResourceQueryKeyRequestValue] == nil) ) {
         [self postNotifyWithStatus:HJResourceManagerRequestStatusRemoveFailed resourceQuery:resourceQuery resource:nil completion:completion];
         return;
     }
@@ -1136,7 +1136,7 @@
     }
     [query setParameter:@((NSInteger)HJResourceExecutorLocalJobOperationRemoveByExpireTimeInterval) forKey:HJResourceExecutorLocalJobParameterKeyOperation];
     [query setParameter:self.repositoryPath forKey:HJResourceExecutorLocalJobParameterKeyRepositoryPath];
-    [query setParameter:[NSNumber numberWithDouble:elpasedTime] forKey:HJResourceExecutorLocalJobParameterKeyExpireTimeInterval];
+    [query setParameter:@(elpasedTime) forKey:HJResourceExecutorLocalJobParameterKeyExpireTimeInterval];
     [query setParameter:completion forKey:HJResourceManagerParameterKeyCompleteBlock];
     [[Hydra defaultHydra] pushQuery:query];
     
@@ -1157,7 +1157,7 @@
     }
     [query setParameter:@((NSInteger)HJResourceExecutorLocalJobOperationRemoveByBoundarySize) forKey:HJResourceExecutorLocalJobParameterKeyOperation];
     [query setParameter:self.repositoryPath forKey:HJResourceExecutorLocalJobParameterKeyRepositoryPath];
-    [query setParameter:[NSNumber numberWithUnsignedInteger:maximumBoundarySize] forKey:HJResourceExecutorLocalJobParameterKeyBoundarySize];
+    [query setParameter:@(maximumBoundarySize) forKey:HJResourceExecutorLocalJobParameterKeyBoundarySize];
     [query setParameter:completion forKey:HJResourceManagerParameterKeyCompleteBlock];
     [[Hydra defaultHydra] pushQuery:query];
     
@@ -1204,7 +1204,7 @@
 
 - (NSString *)resourcePathFromResourceQuery:(NSDictionary *)resourceQuery
 {
-    NSString *hashKey = [self hashKeyStringFromPlainString:[resourceQuery objectForKey:HJResourceQueryKeyRequestValue]];
+    NSString *hashKey = [self hashKeyStringFromPlainString:resourceQuery[HJResourceQueryKeyRequestValue]];
     if( hashKey == nil ) {
         return nil;
     }
@@ -1214,24 +1214,24 @@
 
 - (NSString *)resourceKeyStringFromResourceQuery:(NSDictionary *)resourceQuery
 {
-    NSString *hashKey = [self hashKeyStringFromPlainString:[resourceQuery objectForKey:HJResourceQueryKeyRequestValue]];
+    NSString *hashKey = [self hashKeyStringFromPlainString:resourceQuery[HJResourceQueryKeyRequestValue]];
     if( hashKey == nil ) {
         return nil;
     }
     id remaker;
-    NSString *remakerName = [resourceQuery objectForKey:HJResourceQueryKeyRemakerName];
-    if( [remakerName length] == 0 ) {
+    NSString *remakerName = resourceQuery[HJResourceQueryKeyRemakerName];
+    if( remakerName.length == 0 ) {
         remaker = nil;
     } else {
         [_lockForSupportDict lock];
-        remaker = [_remakerDict objectForKey:remakerName];
+        remaker = _remakerDict[remakerName];
         [_lockForSupportDict unlock];
     }
     NSString *identifier;
     NSString *subIdentifier;
     if( remaker != nil ) {
         identifier = [remaker identifier];
-        subIdentifier = [remaker subIdentifierForParameter:[resourceQuery objectForKey:HJResourceQueryKeyRemakerParameter]];
+        subIdentifier = [remaker subIdentifierForParameter:resourceQuery[HJResourceQueryKeyRemakerParameter]];
     } else {
         identifier = HJResourceOriginalFileName;
         subIdentifier = nil;
@@ -1240,7 +1240,7 @@
         return nil;
     }
     NSString *resourceKey;
-    if( [subIdentifier length] > 0 ) {
+    if( subIdentifier.length > 0 ) {
         resourceKey = [NSString stringWithFormat: @"%@/%@_%@", hashKey, identifier, subIdentifier];
     } else {
         resourceKey = [NSString stringWithFormat: @"%@/%@", hashKey, identifier];
@@ -1252,7 +1252,7 @@
 - (NSString *)filePathFromReosurceQuery:(NSDictionary *)resourceQuery
 {
     NSString *resourceKey = [self resourceKeyStringFromResourceQuery:resourceQuery];
-    if( [resourceKey length] == 0 ) {
+    if( resourceKey.length == 0 ) {
         return nil;
     }
     
@@ -1262,7 +1262,7 @@
 - (NSNumber *)fileSizeFromReosurceQuery:(NSDictionary *)resourceQuery
 {
     NSString *filePath = [self filePathFromReosurceQuery:resourceQuery];
-    if( [filePath length] == 0 ) {
+    if( filePath.length == 0 ) {
         return nil;
     }
     NSDictionary *attribute = [[NSFileManager defaultManager] attributesOfItemAtPath:filePath error:nil];
@@ -1270,7 +1270,7 @@
         return nil;
     }
     
-    return [attribute objectForKey:NSFileSize];
+    return attribute[NSFileSize];
 }
 
 - (NSUInteger)limitSizeOfMemory

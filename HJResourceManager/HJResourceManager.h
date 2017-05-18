@@ -22,7 +22,7 @@
 #define		HJResourceManagerParameterKeyDataObject                     @"HJResourceManagerParameterKeyDataObject"
 #define		HJResourceManagerParameterKeyAsyncHttpDelivererIssuedId     @"HJResourceManagerParameterKeyAsyncHttpDelivererIssuedId"
 
-typedef enum _HJResourceManagerRequestStatus_
+typedef NS_ENUM(NSInteger, HJResourceManagerRequestStatus)
 {
     HJResourceManagerRequestStatusIdle,
     HJResourceManagerRequestStatusLoaded,
@@ -38,62 +38,62 @@ typedef enum _HJResourceManagerRequestStatus_
     HJResourceManagerRequestStatusCalculateFailed,
     HJResourceManagerRequestStatusUnknownError
     
-} HJResourceManagerRequestStatus;
+};
 
-typedef enum _HJResourceFetchFromType_
+typedef NS_ENUM(NSInteger, HJResourceFetchFromType)
 {
     HJResourceFetchFromTypeMemory,
     HJResourceFetchFromTypeRepository
     
-} HJResourceFetchFromType;
+};
 
-typedef void(^HJResourceManagerCompleteBlock)(NSDictionary *);
+typedef void(^HJResourceManagerCompleteBlock)(NSDictionary * _Nullable);
 
 @interface HJResourceManager : HYManager
 
-+ (HJResourceManager *)defaultManager;
++ (HJResourceManager * _Nullable)defaultHJResourceManager;
 
-- (BOOL)standbyWithRepositoryPath:(NSString *)path localJobWorkerName:(NSString *)localJobWorkerName remoteJobWorkerName:(NSString *)remoteJobWorkerName;
+- (BOOL)standbyWithRepositoryPath:(NSString * _Nullable)path localJobWorkerName:(NSString * _Nullable)localJobWorkerName remoteJobWorkerName:(NSString * _Nullable)remoteJobWorkerName;
 - (void)pauseTransfering;
 - (void)resumeTransfering;
 - (void)cancelTransfering;
 
-- (id)cipherForName:(NSString *)name;
-- (BOOL)setCipher:(id)cipher forName:(NSString *)name;
-- (void)removeCipherForName:(NSString *)name;
+- (id _Nullable)cipherForName:(NSString * _Nullable)name;
+- (BOOL)setCipher:(id _Nullable)cipher forName:(NSString * _Nullable)name;
+- (void)removeCipherForName:(NSString * _Nullable)name;
 - (void)removeAllCiphers;
-- (NSData *)encryptData:(NSData *)anData forName:(NSString *)name;
-- (NSData *)decryptData:(NSData *)anData forName:(NSString *)name;
-- (BOOL)encryptData:(NSData *)anData toFilePath:(NSString *)filePath forName:(NSString *)name;
-- (NSData *)decryptDataFromFilePath:(NSString *)filePath forName:(NSString *)name;
+- (NSData * _Nullable)encryptData:(NSData * _Nullable)anData forName:(NSString * _Nullable)name;
+- (NSData * _Nullable)decryptData:(NSData * _Nullable)anData forName:(NSString * _Nullable)name;
+- (BOOL)encryptData:(NSData * _Nullable)anData toFilePath:(NSString * _Nullable)filePath forName:(NSString * _Nullable)name;
+- (NSData * _Nullable)decryptDataFromFilePath:(NSString * _Nullable)filePath forName:(NSString * _Nullable)name;
 
-- (id)remakerForName:(NSString *)name;
-- (BOOL)setRemaker:(id)remaker forName:(NSString *)name;
-- (void)removeRemakerForName:(NSString *)name;
+- (id _Nullable)remakerForName:(NSString * _Nullable)name;
+- (BOOL)setRemaker:(id _Nullable)remaker forName:(NSString * _Nullable)name;
+- (void)removeRemakerForName:(NSString * _Nullable)name;
 - (void)removeAllRemakers;
-- (NSData *)remakeData:(NSData *)anData withParameter:(id)anParameter forName:(NSString *)name;
+- (NSData * _Nullable)remakeData:(NSData * _Nullable)anData withParameter:(id _Nullable)anParameter forName:(NSString * _Nullable)name;
 
-- (void)resourceForQuery:(NSDictionary *)resourceQuery completion:(HJResourceManagerCompleteBlock)completion;
-- (void)resourceForQuery:(NSDictionary *)resourceQuery cutInLine:(BOOL)cutInLine completion:(HJResourceManagerCompleteBlock)completion;
-- (NSDate *)cachedDateOfResourceForQuery:(NSDictionary *)resourceQuery;
-- (BOOL)checkValidationOfResourceWithExpireTimeInterval:(NSTimeInterval)expireTimeInterval forQuery:(NSDictionary *)resourceQuery;
-- (id)cachedResourceForQuery:(NSDictionary *)resourceQuery;
-- (id)pickResourceFromMemoryCacheForQuery:(NSDictionary *)resourceQuery;
-- (void)updateCachedResourceForQuery:(NSDictionary *)resourceQuery completion:(HJResourceManagerCompleteBlock)completion;
-- (BOOL)unloadResourceForQuery:(NSDictionary *)resourceQuery;
+- (void)resourceForQuery:(NSDictionary * _Nullable)resourceQuery completion:(HJResourceManagerCompleteBlock _Nullable)completion;
+- (void)resourceForQuery:(NSDictionary * _Nullable)resourceQuery cutInLine:(BOOL)cutInLine completion:(HJResourceManagerCompleteBlock _Nullable)completion;
+- (NSDate * _Nullable)cachedDateOfResourceForQuery:(NSDictionary * _Nullable)resourceQuery;
+- (BOOL)checkValidationOfResourceWithExpireTimeInterval:(NSTimeInterval)expireTimeInterval forQuery:(NSDictionary * _Nullable)resourceQuery;
+- (id _Nullable)cachedResourceForQuery:(NSDictionary * _Nullable)resourceQuery;
+- (id _Nullable)pickResourceFromMemoryCacheForQuery:(NSDictionary * _Nullable)resourceQuery;
+- (void)updateCachedResourceForQuery:(NSDictionary * _Nullable)resourceQuery completion:(HJResourceManagerCompleteBlock _Nullable)completion;
+- (BOOL)unloadResourceForQuery:(NSDictionary * _Nullable)resourceQuery;
 - (BOOL)unloadAllResources;
-- (void)removeResourceForQuery:(NSDictionary *)resourceQuery completion:(HJResourceManagerCompleteBlock)completion;
-- (void)removeResourcesForElapsedTimeFromNow:(NSTimeInterval)elpasedTime completion:(HJResourceManagerCompleteBlock)completion;
-- (void)removeResourcesUnderMaximumBoundarySize:(NSUInteger)maximumBoundarySize completion:(HJResourceManagerCompleteBlock)completion;
-- (void)removeAllResourcesWithCompletion:(HJResourceManagerCompleteBlock)completion;
-- (void)amountSizeOfAllResoursesWithCompletion:(HJResourceManagerCompleteBlock)completion;
+- (void)removeResourceForQuery:(NSDictionary * _Nullable)resourceQuery completion:(HJResourceManagerCompleteBlock _Nullable)completion;
+- (void)removeResourcesForElapsedTimeFromNow:(NSTimeInterval)elpasedTime completion:(HJResourceManagerCompleteBlock _Nullable)completion;
+- (void)removeResourcesUnderMaximumBoundarySize:(NSUInteger)maximumBoundarySize completion:(HJResourceManagerCompleteBlock _Nullable)completion;
+- (void)removeAllResourcesWithCompletion:(HJResourceManagerCompleteBlock _Nullable)completion;
+- (void)amountSizeOfAllResoursesWithCompletion:(HJResourceManagerCompleteBlock _Nullable)completion;
 
-- (NSString *)resourcePathFromResourceQuery:(NSDictionary *)resourceQuery;
-- (NSString *)resourceKeyStringFromResourceQuery:(NSDictionary *)resourceQuery;
-- (NSString *)filePathFromReosurceQuery:(NSDictionary *)resourceQuery;
-- (NSNumber *)fileSizeFromReosurceQuery:(NSDictionary *)resourceQuery;
+- (NSString * _Nullable)resourcePathFromResourceQuery:(NSDictionary * _Nullable)resourceQuery;
+- (NSString * _Nullable)resourceKeyStringFromResourceQuery:(NSDictionary * _Nullable)resourceQuery;
+- (NSString * _Nullable)filePathFromReosurceQuery:(NSDictionary * _Nullable)resourceQuery;
+- (NSNumber * _Nullable)fileSizeFromReosurceQuery:(NSDictionary * _Nullable)resourceQuery;
 
-@property (nonatomic, readonly) NSString *repositoryPath;
+@property (nonatomic, readonly) NSString * _Nullable repositoryPath;
 @property (nonatomic, readonly) BOOL standby;
 @property (nonatomic, readonly) NSUInteger usedMemorySize;
 @property (nonatomic, assign) NSUInteger limitSizeOfMemory;

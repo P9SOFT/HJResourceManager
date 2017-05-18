@@ -13,9 +13,9 @@
 
 + (HJResourceDataType)dataTypeFromMimeType:(NSString *)mimeType
 {
-    if( [mimeType length] > 0 ) {
+    if( mimeType.length > 0 ) {
         NSArray *pair = [mimeType componentsSeparatedByString:@"/"];
-        if( [pair count] > 0 ) {
+        if( pair.count > 0 ) {
             NSString *prefix = [pair[0] lowercaseString];
             if( [prefix isEqualToString:@"text"] == YES ) {
                 return HJResourceDataTypeString;

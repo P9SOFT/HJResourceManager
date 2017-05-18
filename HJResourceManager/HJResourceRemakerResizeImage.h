@@ -17,6 +17,6 @@
 
 @interface HJResourceRemakerResizeImage : NSObject <HJResourceRemakerProtocol>
 
-+ (NSDictionary *)parameterFromWidth:(NSInteger)width height:(NSInteger)height;
++ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height;
 
 @end

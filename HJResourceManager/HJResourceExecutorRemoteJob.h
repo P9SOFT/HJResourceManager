@@ -26,14 +26,14 @@
 #define     HJResourceExecutorRemoteJobDefaultTimeoutInterval           8
 #define     HJResourceExecutorRemoteJobDefaultMaximumCountOfConnection  8
 
-typedef enum _HJResourceExecutorRemoteJobOperation_
+typedef NS_ENUM(NSInteger, HJResourceExecutorRemoteJobOperation)
 {
     HJResourceExecutorRemoteJobOperationRequest,
     HJResourceExecutorRemoteJobOperationReceive,
 	
-} HJResourceExecutorRemoteJobOperation;
+};
 
-typedef enum _HJResourceExecutorRemoteJobStatus_
+typedef NS_ENUM(NSInteger, HJResourceExecutorRemoteJobStatus)
 {
     HJResourceExecutorRemoteJobStatusDummy,
     HJResourceExecutorRemoteJobStatusRequested,
@@ -45,13 +45,9 @@ typedef enum _HJResourceExecutorRemoteJobStatus_
     HJResourceExecutorRemoteJobStatusNetworkError,
     HJResourceExecutorRemoteJobStatusInternalError
 	
-} HJResourceExecutorRemoteJobStatus;
+};
 
 @interface HJResourceExecutorRemoteJob : HYExecuter
-{
-    NSTimeInterval		_timeoutInterval;
-    NSInteger			_maximumConnection;
-}
 
 @property (nonatomic, assign) NSTimeInterval timeoutInterval;
 @property (nonatomic, assign) NSInteger maximumConnection;
