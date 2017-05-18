@@ -51,7 +51,7 @@ typedef void(^HJResourceManagerCompleteBlock)(NSDictionary * _Nullable);
 
 @interface HJResourceManager : HYManager
 
-+ (HJResourceManager * _Nullable)defaultHJResourceManager;
++ (HJResourceManager * _Nonnull)defaultHJResourceManager;
 
 - (BOOL)standbyWithRepositoryPath:(NSString * _Nullable)path localJobWorkerName:(NSString * _Nullable)localJobWorkerName remoteJobWorkerName:(NSString * _Nullable)remoteJobWorkerName;
 - (void)pauseTransfering;
