@@ -10,8 +10,14 @@
 #import <ImageIO/ImageIO.h>
 #import "HJResourceRemakerResizeImage.h"
 
-#define     HJResourceRemakerResizeImageIdentifier  @"HJResizeImage"
-#define     kSeparateCharactor                      @"_"
+#define     HJResourceRemakerResizeImageIdentifier              @"HJResizeImage"
+#define     kSeparateCharactor                                  @"_"
+
+#define     HJResourceRemakerResizeImageValueJpeg               @"jpeg"
+#define     HJResourceRemakerResizeImageValuePng                @"png"
+#define     HJResourceRemakerResizeImageValueScaleToFill        @"scaleToFill"
+#define     HJResourceRemakerResizeImageValueAspectFit          @"aspectFit"
+#define     HJResourceRemakerResizeImageValueAspectFill         @"aspectFill"
 
 @implementation HJResourceRemakerResizeImage
 
@@ -22,11 +28,11 @@
              };
 }
 
-+ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height contentMode:(NSString *)contentMode
++ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height contentMode:(HJResourceRemakerResizeImageContentMode)contentMode
 {
     return @{HJResourceRemakerResizeImageParameterWidthKey:@(width),
              HJResourceRemakerResizeImageParameterHeightKey:@(height),
-             HJResourceRemakerResizeImageParameterContentModeKey:contentMode
+             HJResourceRemakerResizeImageParameterContentModeKey:@(contentMode)
              };
 }
 
@@ -38,22 +44,22 @@
              };
 }
 
-+ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height scale:(CGFloat)scale fileFormat:(NSString *)fileFormat
++ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height scale:(CGFloat)scale fileFormat:(HJResourceRemakerResizeImageFileFormat)fileFormat
 {
     return @{HJResourceRemakerResizeImageParameterWidthKey:@(width),
              HJResourceRemakerResizeImageParameterHeightKey:@(height),
              HJResourceRemakerResizeImageParameterScaleKey:@(scale),
-             HJResourceRemakerResizeImageParameterFileFormatKey:fileFormat
+             HJResourceRemakerResizeImageParameterFileFormatKey:@(fileFormat)
              };
 }
 
-+ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height scale:(CGFloat)scale fileFormat:(NSString *)fileFormat contentMode:(NSString *)contentMode
++ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height scale:(CGFloat)scale fileFormat:(HJResourceRemakerResizeImageFileFormat)fileFormat contentMode:(HJResourceRemakerResizeImageContentMode)contentMode
 {
     return @{HJResourceRemakerResizeImageParameterWidthKey:@(width),
              HJResourceRemakerResizeImageParameterHeightKey:@(height),
              HJResourceRemakerResizeImageParameterScaleKey:@(scale),
-             HJResourceRemakerResizeImageParameterFileFormatKey:fileFormat,
-             HJResourceRemakerResizeImageParameterContentModeKey:contentMode
+             HJResourceRemakerResizeImageParameterFileFormatKey:@(fileFormat),
+             HJResourceRemakerResizeImageParameterContentModeKey:@(contentMode)
              };
 }
 
@@ -71,8 +77,8 @@
     NSNumber *widthNumber = dict[HJResourceRemakerResizeImageParameterWidthKey];
     NSNumber *heightNumber = dict[HJResourceRemakerResizeImageParameterHeightKey];
     NSNumber *scaleNumber = dict[HJResourceRemakerResizeImageParameterScaleKey];
-    NSString *fileFormat = dict[HJResourceRemakerResizeImageParameterFileFormatKey];
-    NSString *contentMode = dict[HJResourceRemakerResizeImageParameterContentModeKey];
+    HJResourceRemakerResizeImageFileFormat fileFormat = (HJResourceRemakerResizeImageFileFormat)[dict[HJResourceRemakerResizeImageParameterFileFormatKey] integerValue];
+    HJResourceRemakerResizeImageContentMode contentMode = (HJResourceRemakerResizeImageContentMode)[dict[HJResourceRemakerResizeImageParameterContentModeKey] integerValue];
     if( widthNumber == nil ) {
         widthNumber = @(0);
     }
@@ -82,14 +88,30 @@
     if( scaleNumber == nil ) {
         scaleNumber = @([UIScreen mainScreen].scale);
     }
-    if( fileFormat == nil ) {
-        fileFormat = HJResourceRemakerResizeImageValueJpeg;
+    NSString *fileFormatString = HJResourceRemakerResizeImageValueJpeg;
+    switch(fileFormat) {
+        case HJResourceRemakerResizeImageFileFormatPng :
+            fileFormatString = HJResourceRemakerResizeImageValuePng;
+            break;
+        default :
+            break;
+    }
+    NSString *contentModeString = nil;
+    switch(contentMode) {
+        case HJResourceRemakerResizeImageContentModeAspectFit :
+            contentModeString = HJResourceRemakerResizeImageValueAspectFit;
+            break;
+        case HJResourceRemakerResizeImageContentModeAspectFill :
+            contentModeString = HJResourceRemakerResizeImageValueAspectFill;
+            break;
+        default :
+            break;
     }
     NSString *subIdentifier = nil;
-    if( (contentMode == nil) || ([contentMode isEqualToString:HJResourceRemakerResizeImageValueScaleToFill] == YES) ) {
-        subIdentifier = [NSString stringWithFormat:@"%@%@%@%@%@%@%@", widthNumber, kSeparateCharactor, heightNumber, kSeparateCharactor, scaleNumber, kSeparateCharactor, fileFormat];
+    if( contentModeString == nil ) {
+        subIdentifier = [NSString stringWithFormat:@"%@%@%@%@%@%@%@", widthNumber, kSeparateCharactor, heightNumber, kSeparateCharactor, scaleNumber, kSeparateCharactor, fileFormatString];
     } else {
-        subIdentifier = [NSString stringWithFormat:@"%@%@%@%@%@%@%@%@%@", widthNumber, kSeparateCharactor, heightNumber, kSeparateCharactor, scaleNumber, kSeparateCharactor, fileFormat, kSeparateCharactor, contentMode];
+        subIdentifier = [NSString stringWithFormat:@"%@%@%@%@%@%@%@%@%@", widthNumber, kSeparateCharactor, heightNumber, kSeparateCharactor, scaleNumber, kSeparateCharactor, fileFormatString, kSeparateCharactor, contentModeString];
     }
     return subIdentifier;
 }
@@ -105,13 +127,12 @@
     CGColorSpaceRef colorSpace;
     CGContextRef    context;
     CGImageRef      resizedImageRef;
-    BOOL            toPNG;
-    NSString        *contentMode;
+    HJResourceRemakerResizeImageFileFormat fileFormat;
+    HJResourceRemakerResizeImageContentMode contentMode;
     
     if( (anData.length <= 0) || ([anParameter isKindOfClass:[NSDictionary class]] == NO) ) {
         return nil;
     }
-    toPNG = [anParameter[HJResourceRemakerResizeImageParameterFileFormatKey] isEqualToString:HJResourceRemakerResizeImageValuePng];
     resizeSize.width = (CGFloat)[anParameter[HJResourceRemakerResizeImageParameterWidthKey] floatValue];
     resizeSize.height = (CGFloat)[anParameter[HJResourceRemakerResizeImageParameterHeightKey] floatValue];
     if( (resizeSize.width <= 0.0f) && (resizeSize.height <= 0.0f) ) {
@@ -121,37 +142,46 @@
     if( scale == 0.0 ) {
         scale = [UIScreen mainScreen].scale;
     }
-    if( (contentMode = anParameter[HJResourceRemakerResizeImageParameterContentModeKey]) == nil ) {
-        contentMode = HJResourceRemakerResizeImageValueScaleToFill;
+    if( [anParameter[HJResourceRemakerResizeImageParameterFileFormatKey] isKindOfClass:[NSString class]] == YES ) {
+        fileFormat = ([anParameter[HJResourceRemakerResizeImageParameterFileFormatKey] isEqualToString:HJResourceRemakerResizeImageValuePng] == YES) ? HJResourceRemakerResizeImageFileFormatPng : HJResourceRemakerResizeImageFileFormatJpeg;
+    } else if( [anParameter[HJResourceRemakerResizeImageParameterFileFormatKey] isKindOfClass:[NSNumber class]] == YES ) {
+        fileFormat = (HJResourceRemakerResizeImageFileFormat)[anParameter[HJResourceRemakerResizeImageParameterFileFormatKey] integerValue];
+    } else {
+        fileFormat = HJResourceRemakerResizeImageFileFormatJpeg;
     }
+    contentMode = (HJResourceRemakerResizeImageContentMode)[anParameter[HJResourceRemakerResizeImageParameterContentModeKey] integerValue];
     if( (sourceImage = [UIImage imageWithData:anData]) == nil ) {
         return nil;
     }
     sourceSize = sourceImage.size;
-    if( [contentMode isEqualToString:HJResourceRemakerResizeImageValueAspectFit] == YES ) {
-        if( sourceSize.width >= sourceSize.height ) {
-            rate = resizeSize.width / sourceSize.width;
-            resizeSize.height = (int)(sourceSize.height * rate);
-        } else {
-            rate = resizeSize.height / sourceSize.height;
-            resizeSize.width = (int)(sourceSize.width * rate);
-        }
-    } else if( [contentMode isEqualToString:HJResourceRemakerResizeImageValueAspectFill] == YES ) {
-        if( sourceSize.width >= sourceSize.height ) {
-            rate = resizeSize.height / sourceSize.height;
-            resizeSize.width = (int)(sourceSize.width * rate);
-        } else {
-            rate = resizeSize.width / sourceSize.width;
-            resizeSize.height = (int)(sourceSize.height * rate);
-        }
-    } else {
-        if( (resizeSize.width > 0.0f) && (resizeSize.height <= 0.0f) ) {
-            rate = resizeSize.width / sourceSize.width;
-            resizeSize.height = (int)(sourceSize.height * rate);
-        } else if( (resizeSize.width <= 0) && (resizeSize.height > 0) ) {
-            rate = resizeSize.height / sourceSize.height;
-            resizeSize.width = (int)(sourceSize.width * rate);
-        }
+    switch(contentMode) {
+        case HJResourceRemakerResizeImageContentModeAspectFit :
+            if( sourceSize.width >= sourceSize.height ) {
+                rate = resizeSize.width / sourceSize.width;
+                resizeSize.height = (int)(sourceSize.height * rate);
+            } else {
+                rate = resizeSize.height / sourceSize.height;
+                resizeSize.width = (int)(sourceSize.width * rate);
+            }
+            break;
+        case HJResourceRemakerResizeImageContentModeAspectFill :
+            if( sourceSize.width >= sourceSize.height ) {
+                rate = resizeSize.height / sourceSize.height;
+                resizeSize.width = (int)(sourceSize.width * rate);
+            } else {
+                rate = resizeSize.width / sourceSize.width;
+                resizeSize.height = (int)(sourceSize.height * rate);
+            }
+            break;
+        default :
+            if( (resizeSize.width > 0.0f) && (resizeSize.height <= 0.0f) ) {
+                rate = resizeSize.width / sourceSize.width;
+                resizeSize.height = (int)(sourceSize.height * rate);
+            } else if( (resizeSize.width <= 0) && (resizeSize.height > 0) ) {
+                rate = resizeSize.height / sourceSize.height;
+                resizeSize.width = (int)(sourceSize.width * rate);
+            }
+            break;
     }
     colorSpace = CGColorSpaceCreateDeviceRGB();
     if( (context = CGBitmapContextCreate(NULL, resizeSize.width*scale, resizeSize.height*scale, 8, 0, colorSpace, (CGBitmapInfo)kCGImageAlphaPremultipliedLast)) == NULL ) {
@@ -167,7 +197,7 @@
     if( resizedImage == nil ) {
         return nil;
     }
-    NSData *data = (toPNG == YES) ? UIImagePNGRepresentation(resizedImage) : UIImageJPEGRepresentation(resizedImage, 1.0f);
+    NSData *data = (fileFormat == HJResourceRemakerResizeImageFileFormatPng) ? UIImagePNGRepresentation(resizedImage) : UIImageJPEGRepresentation(resizedImage, 1.0f);
     return data;
 }
 

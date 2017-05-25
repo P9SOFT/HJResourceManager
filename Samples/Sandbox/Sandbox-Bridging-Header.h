@@ -7,5 +7,6 @@
 
 #import <Hydra/Hydra.h>
 #import <HJResourceManager/HJResourceManager.h>
+#import <HJResourceManager/HJResourceRemakerResizeImage.h>
 
 #endif /* SandboxBridgingHeader_h */
