@@ -36,7 +36,6 @@ typedef NS_ENUM(NSInteger, HJResourceExecutorLocalJobOperation)
     HJResourceExecutorLocalJobOperationRemoveByBoundarySize,
     HJResourceExecutorLocalJobOperationRemoveAll,
     HJResourceExecutorLocalJobOperationAmountSize
-	
 };
 
 typedef NS_ENUM(NSInteger, HJResourceExecutorLocalJobStatus)
@@ -52,7 +51,6 @@ typedef NS_ENUM(NSInteger, HJResourceExecutorLocalJobStatus)
     HJResourceExecutorLocalJobStatusUnknownOperation,
     HJResourceExecutorLocalJobStatusInvalidParameter,
     HJResourceExecutorLocalJobStatusInternalError
-	
 };
 
 

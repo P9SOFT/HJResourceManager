@@ -14,9 +14,20 @@
 #define     HJResourceRemakerResizeImageParameterHeightKey      @"height"
 #define     HJResourceRemakerResizeImageParameterScaleKey       @"scale"
 #define     HJResourceRemakerResizeImageParameterFileFormatKey  @"fileFormat"
+#define     HJResourceRemakerResizeImageParameterContentModeKey @"contentMode"
+
+#define     HJResourceRemakerResizeImageValueJpeg               @"jpeg"
+#define     HJResourceRemakerResizeImageValuePng                @"png"
+#define     HJResourceRemakerResizeImageValueScaleToFill        @"scaleToFill"
+#define     HJResourceRemakerResizeImageValueAspectFit          @"aspectFit"
+#define     HJResourceRemakerResizeImageValueAspectFill         @"aspectFill"
 
 @interface HJResourceRemakerResizeImage : NSObject <HJResourceRemakerProtocol>
 
 + (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height;
++ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height contentMode:(NSString * _Nonnull)contentMode;
++ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height scale:(CGFloat)scale;
++ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height scale:(CGFloat)scale fileFormat:(NSString * _Nonnull)fileFormat;
++ (NSDictionary * _Nullable)parameterFromWidth:(NSInteger)width height:(NSInteger)height scale:(CGFloat)scale fileFormat:(NSString * _Nonnull)fileFormat contentMode:(NSString * _Nonnull)contentMode;
 
 @end

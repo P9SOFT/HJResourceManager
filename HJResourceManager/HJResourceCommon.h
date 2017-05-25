@@ -30,7 +30,6 @@ typedef NS_ENUM(NSInteger, HJResourceDataType)
     HJResourceDataTypeImage,
     HJResourceDataTypeSize,
     HJResourceDataTypeFilePath
-    
 };
 
 @interface HJResourceCommon : NSObject

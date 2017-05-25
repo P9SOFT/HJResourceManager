@@ -30,7 +30,6 @@ typedef NS_ENUM(NSInteger, HJResourceExecutorRemoteJobOperation)
 {
     HJResourceExecutorRemoteJobOperationRequest,
     HJResourceExecutorRemoteJobOperationReceive,
-	
 };
 
 typedef NS_ENUM(NSInteger, HJResourceExecutorRemoteJobStatus)
@@ -44,7 +43,6 @@ typedef NS_ENUM(NSInteger, HJResourceExecutorRemoteJobStatus)
     HJResourceExecutorRemoteJobStatusInvalidParameter,
     HJResourceExecutorRemoteJobStatusNetworkError,
     HJResourceExecutorRemoteJobStatusInternalError
-	
 };
 
 @interface HJResourceExecutorRemoteJob : HYExecuter

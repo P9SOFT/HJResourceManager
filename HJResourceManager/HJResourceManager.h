@@ -37,14 +37,12 @@ typedef NS_ENUM(NSInteger, HJResourceManagerRequestStatus)
     HJResourceManagerRequestStatusCalculated,
     HJResourceManagerRequestStatusCalculateFailed,
     HJResourceManagerRequestStatusUnknownError
-    
 };
 
 typedef NS_ENUM(NSInteger, HJResourceFetchFromType)
 {
     HJResourceFetchFromTypeMemory,
     HJResourceFetchFromTypeRepository
-    
 };
 
 typedef void(^HJResourceManagerCompleteBlock)(NSDictionary * _Nullable);
