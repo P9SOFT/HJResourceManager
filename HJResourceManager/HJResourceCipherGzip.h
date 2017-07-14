@@ -9,7 +9,6 @@
 
 #import <Foundation/Foundation.h>
 #import <libkern/OSAtomic.h>
-#import <zlib.h>
 #import <HJResourceManager/HJResourceCipherProtocol.h>
 
 @interface HJResourceCipherGzip : NSObject <HJResourceCipherProtocol>
