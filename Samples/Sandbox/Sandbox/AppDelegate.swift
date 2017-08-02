@@ -21,6 +21,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Hydra.default().addCommonWorker()
         let repositoryPath:String = NSSearchPathForDirectoriesInDomains(.documentationDirectory, .userDomainMask, true)[0] + "/rsrc_repo"
         HJResourceManager.default().standby(withRepositoryPath: repositoryPath, localJobWorkerName: HydraCommonWorkerName, remoteJobWorkerName: HydraCommonWorkerName)
+        HJResourceManager.default().setRemaker(HJResourceRemakerResizeImage(), forName: "resize")
         HJResourceManager.default().bind(toHydra: Hydra.default())
         Hydra.default().startAllWorkers()
         

@@ -27,7 +27,7 @@
 #define     HJResourceExecutorLocalJobParameterKeyBoundarySize          @"HJResourceExecutorLocalJobParameterKeyBoundarySize"
 #define		HJResourceExecutorLocalJobParameterKeyDataObject            @"HJResourceExecutorLocalJobParameterKeyDataObject"
 
-typedef enum _HJResourceExecutorLocalJobOperation_
+typedef NS_ENUM(NSInteger, HJResourceExecutorLocalJobOperation)
 {
     HJResourceExecutorLocalJobOperationLoad,
     HJResourceExecutorLocalJobOperationUpdate,
@@ -36,10 +36,9 @@ typedef enum _HJResourceExecutorLocalJobOperation_
     HJResourceExecutorLocalJobOperationRemoveByBoundarySize,
     HJResourceExecutorLocalJobOperationRemoveAll,
     HJResourceExecutorLocalJobOperationAmountSize
-	
-} HJResourceExecutorLocalJobOperation;
+};
 
-typedef enum _HJResourceExecutorLocalJobStatus_
+typedef NS_ENUM(NSInteger, HJResourceExecutorLocalJobStatus)
 {
     HJResourceExecutorLocalJobStatusDummy,
     HJResourceExecutorLocalJobStatusLoaded,
@@ -52,8 +51,7 @@ typedef enum _HJResourceExecutorLocalJobStatus_
     HJResourceExecutorLocalJobStatusUnknownOperation,
     HJResourceExecutorLocalJobStatusInvalidParameter,
     HJResourceExecutorLocalJobStatusInternalError
-	
-} HJResourceExecutorLocalJobStatus;
+};
 
 
 @interface HJResourceExecutorLocalJob : HYExecuter

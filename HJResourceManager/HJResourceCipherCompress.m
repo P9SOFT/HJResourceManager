@@ -8,6 +8,7 @@
 //  Licensed under the MIT license.
 
 #import "HJResourceCipherCompress.h"
+#import <zlib.h>
 
 @implementation HJResourceCipherCompress
 
@@ -17,16 +18,16 @@
     Bytef *targetBuffer;
     uLong targetLength;
     
-    if( [anData length] <= 0 ) {
+    if( anData.length <= 0 ) {
         return nil;
     }
     
-    sourceLength = (uLong)[anData length];
+    sourceLength = (uLong)anData.length;
     targetLength = compressBound(sourceLength);
     if( (targetBuffer = (Bytef *)malloc(targetLength)) == NULL ) {
         return nil;
     }
-    if( compress((Bytef *)targetBuffer, &targetLength, (const Bytef*)[anData bytes], sourceLength) != Z_OK ) {
+    if( compress((Bytef *)targetBuffer, &targetLength, (const Bytef*)anData.bytes, sourceLength) != Z_OK ) {
         free(targetBuffer);
         return nil;
     }
@@ -44,17 +45,17 @@
     Bytef *targetBuffer;
     uLong targetLength;
     
-    if( [anData length] <= 0 ) {
+    if( anData.length <= 0 ) {
         return nil;
     }
     
-    sourceLength = (uLong)[anData length];
+    sourceLength = (uLong)anData.length;
     targetLength = sourceLength * 2;
     
     if( (targetBuffer = (Bytef *)malloc(targetLength)) == NULL ) {
         return nil;
     }
-    if( uncompress((Bytef *)targetBuffer, &targetLength, (const Bytef*)[anData bytes], sourceLength) != Z_OK ) {
+    if( uncompress((Bytef *)targetBuffer, &targetLength, (const Bytef*)anData.bytes, sourceLength) != Z_OK ) {
         free(targetBuffer);
         return nil;
     }
@@ -70,7 +71,7 @@
 {
     NSData *encryptedData;
     
-    if( ([anData length] <= 0) || ([path length] <= 0) ) {
+    if( (anData.length <= 0) || (path.length <= 0) ) {
         return NO;
     }
     
@@ -83,7 +84,7 @@
 
 - (NSData *)decryptDataFromFilePath:(NSString *)path
 {
-    if( [path length] <= 0 ) {
+    if( path.length <= 0 ) {
         return nil;
     }
     

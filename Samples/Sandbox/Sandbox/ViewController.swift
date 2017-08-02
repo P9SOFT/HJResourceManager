@@ -14,6 +14,17 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
+        
+        if let remakerParameter = HJResourceRemakerResizeImage.parameter(fromWidth: 100, height:100, contentMode:.aspectFit ) {
+            let query:[String:Any] = [HJResourceQueryKeyRequestValue:"http://www.p9soft.com/images/sample.jpg",
+                         HJResourceQueryKeyDataType:Int(HJResourceDataType.image.rawValue),
+                         HJResourceQueryKeyRemakerName:"resize",
+                         HJResourceQueryKeyRemakerParameter:remakerParameter
+            ]
+            HJResourceManager.default().resource(forQuery: query, completion: { (result:[AnyHashable : Any]?) in
+                print("done")
+            })
+        }
     }
 
     override func didReceiveMemoryWarning() {

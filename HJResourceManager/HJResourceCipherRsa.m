@@ -9,6 +9,16 @@
 
 #import "HJResourceCipherRsa.h"
 
+@interface HJResourceCipherRsa()
+{
+    SecCertificateRef   _certificateRef;
+    SecPolicyRef        _policyRef;
+    SecTrustRef         _trustRef;
+    SecKeyRef           _publicKeyRef;
+    size_t              _maximumSizeOfPlainText;
+}
+@end
+
 @implementation HJResourceCipherRsa
 
 @synthesize maximumSizeOfPlainText = _maximumSizeOfPlainText;
@@ -38,7 +48,7 @@
     OSStatus            status;
     SecTrustResultType  trustResultType;
     
-    if( [publicKeyData length] <= 0 ) {
+    if( publicKeyData.length <= 0 ) {
         return NO;
     }
     if( (_certificateRef = SecCertificateCreateWithData(kCFAllocatorDefault, (__bridge CFDataRef)(publicKeyData))) == NULL ) {
@@ -70,7 +80,7 @@
     OSStatus    status;
     NSData  *cipherData;
     
-    if( (plainLength = [anData length]) > _maximumSizeOfPlainText ) {
+    if( (plainLength = anData.length) > _maximumSizeOfPlainText ) {
         return nil;
     }
     
@@ -104,7 +114,7 @@
 {
     NSData *encryptedData;
     
-    if( ([anData length] <= 0) || ([path length] <= 0) ) {
+    if( (anData.length <= 0) || (path.length <= 0) ) {
         return NO;
     }
     
@@ -117,7 +127,7 @@
 
 - (NSData *)decryptDataFromFilePath:(NSString *)path
 {
-    if( [path length] <= 0 ) {
+    if( path.length <= 0 ) {
         return nil;
     }
     

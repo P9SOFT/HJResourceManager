@@ -11,7 +11,11 @@
 #import "HJResourceCommon.h"
 #import "HJResourceExecutorRemoteJob.h"
 
-@interface HJResourceExecutorRemoteJob (HJResourceExecutorRemoteJobPrivate)
+@interface HJResourceExecutorRemoteJob ()
+{
+    NSTimeInterval		_timeoutInterval;
+    NSInteger			_maximumConnection;
+}
 
 - (HYResult *)resultForQuery:(id)anQuery withStatus:(HJResourceExecutorRemoteJobStatus)status;
 - (void)requestWithQuery:(id)anQuery;
@@ -24,7 +28,7 @@
 @synthesize timeoutInterval = _timeoutInterval;
 @synthesize maximumConnection = _maximumConnection;
 
-- (id)init
+- (instancetype)init
 {
     if( (self = [super init]) != nil ) {
         _timeoutInterval = HJResourceExecutorRemoteJobDefaultTimeoutInterval;
@@ -79,7 +83,7 @@
     HYResult *result;
     if( (result = [HYResult resultWithName:self.name]) != nil ) {
         [result setParametersFromDictionary:[anQuery paramDict]];
-        [result setParameter:[NSNumber numberWithInteger: status] forKey:HJResourceExecutorRemoteJobParameterKeyStatus];
+        [result setParameter:@(status) forKey:HJResourceExecutorRemoteJobParameterKeyStatus];
     }
     
     return result;
@@ -94,7 +98,7 @@
         temporaryFilePath = [NSString stringWithFormat:@"%@%@", resourceFilePath, HJResourceExecutorRemoteJobTemporaryFileNamePostfix];
     }
     BOOL cutInLine = [[anQuery parameterForKey:HJResourceExecutorRemoteJobParameterKeyCutInLine] boolValue];
-    if( ([urlString length] == 0) || ([resourceFilePath length] == 0) || ([temporaryFilePath length] == 0) ) {
+    if( (urlString.length == 0) || (resourceFilePath.length == 0) || (temporaryFilePath.length == 0) ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorRemoteJobStatusInvalidParameter]];
         return;
     }
@@ -105,7 +109,7 @@
         return;
     }
     [closeQuery setParametersFromDictionary:[anQuery paramDict]];
-    [closeQuery setParameter:[NSNumber numberWithInteger: HJResourceExecutorRemoteJobOperationReceive] forKey:HJResourceExecutorRemoteJobParameterKeyOperation];
+    [closeQuery setParameter:@(HJResourceExecutorRemoteJobOperationReceive) forKey:HJResourceExecutorRemoteJobParameterKeyOperation];
     [closeQuery setParameter:temporaryFilePath forKey:HJResourceExecutorRemoteJobParameterKeyTemporaryFilePath];
     
     HJAsyncHttpDeliverer *deliverer;
@@ -114,7 +118,7 @@
         return;
     }
     [deliverer setGetWithUrlString:urlString toFilePath:temporaryFilePath];
-    [deliverer setTimeoutInterval:self.timeoutInterval];
+    deliverer.timeoutInterval = self.timeoutInterval;
     [deliverer setNotifyStatus:YES];
     [deliverer activeLimiterName:self.name withCount:self.maximumConnection byOrder:(cutInLine ? HYAsyncTaskActiveOrderToFirst : HYAsyncTaskActiveOrderToLast)];
     [self bindAsyncTask:deliverer];
@@ -125,8 +129,8 @@
         return;
     }
     [result setParametersFromDictionary:[anQuery paramDict]];
-    [result setParameter:[NSNumber numberWithInteger:HJResourceExecutorRemoteJobStatusRequested] forKey:HJResourceExecutorRemoteJobParameterKeyStatus];
-    [result setParameter:[NSNumber numberWithUnsignedInteger:(NSUInteger)deliverer.issuedId] forKey:HJResourceExecutorRemoteJobParameterKeyAsyncHttpDelivererIssuedId];
+    [result setParameter:@(HJResourceExecutorRemoteJobStatusRequested) forKey:HJResourceExecutorRemoteJobParameterKeyStatus];
+    [result setParameter:@((NSUInteger)deliverer.issuedId) forKey:HJResourceExecutorRemoteJobParameterKeyAsyncHttpDelivererIssuedId];
     
     [self storeResult:result];
 }
@@ -135,7 +139,7 @@
 {
     NSString *resourceFilePath = [anQuery parameterForKey:HJResourceExecutorRemoteJobParameterKeyResourceFilePath];
     NSString *temporaryFilePath = [anQuery parameterForKey:HJResourceExecutorRemoteJobParameterKeyTemporaryFilePath];
-    if( ([resourceFilePath length] == 0) || ([temporaryFilePath length] == 0) ) {
+    if( (resourceFilePath.length == 0) || (temporaryFilePath.length == 0) ) {
         [self storeResult:[self resultForQuery:anQuery withStatus:HJResourceExecutorRemoteJobStatusInvalidParameter]];
         return;
     }
@@ -156,7 +160,7 @@
     NSURLResponse *response = [anQuery parameterForKey:HJAsyncHttpDelivererParameterKeyResponse];
     NSString *mimeType = (response == nil) ? nil : response.MIMEType;
     NSString *mimeTypeFilePath = [[anQuery parameterForKey:HJResourceExecutorRemoteJobParameterKeyResourcePath] stringByAppendingPathComponent:HJResourceMimeTypeFileName];
-    if( ([mimeType length] > 0) && ([mimeTypeFilePath length] > 0) ) {
+    if( (mimeType.length > 0) && (mimeTypeFilePath.length > 0) ) {
         [mimeType writeToFile:mimeTypeFilePath atomically:YES encoding:NSUTF8StringEncoding error:nil];
     }
     
@@ -166,7 +170,7 @@
         return;
     }
     [result setParametersFromDictionary:[anQuery paramDict]];
-    [result setParameter:[NSNumber numberWithInteger:HJResourceExecutorRemoteJobStatusReceived] forKey:HJResourceExecutorRemoteJobParameterKeyStatus];
+    [result setParameter:@(HJResourceExecutorRemoteJobStatusReceived) forKey:HJResourceExecutorRemoteJobParameterKeyStatus];
     [result setParameter:[anQuery parameterForKey:HJAsyncHttpDelivererParameterKeyIssuedId] forKey:HJResourceExecutorRemoteJobParameterKeyAsyncHttpDelivererIssuedId];
     
     [self storeResult: result];
