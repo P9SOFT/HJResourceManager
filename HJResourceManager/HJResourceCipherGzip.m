@@ -8,6 +8,7 @@
 //  Licensed under the MIT license.
 
 #import "HJResourceCipherGzip.h"
+#import <zlib.h>
 
 #define     kMinimumReadBufferSize      (1024*1024)
 

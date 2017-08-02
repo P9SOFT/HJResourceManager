@@ -8,6 +8,7 @@
 //  Licensed under the MIT license.
 
 #import "HJResourceCipherCompress.h"
+#import <zlib.h>
 
 @implementation HJResourceCipherCompress
 

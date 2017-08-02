@@ -8,7 +8,6 @@
 //  Licensed under the MIT license.
 
 #import <Foundation/Foundation.h>
-#import <zlib.h>
 #import <HJResourceManager/HJResourceCipherProtocol.h>
 
 @interface HJResourceCipherCompress : NSObject <HJResourceCipherProtocol>
