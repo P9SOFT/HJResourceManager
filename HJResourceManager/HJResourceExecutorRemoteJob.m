@@ -163,7 +163,9 @@
     deliverer.timeoutInterval = self.timeoutInterval;
     [deliverer setNotifyStatus:YES];
     [deliverer activeLimiterName:self.name withCount:self.maximumConnection byOrder:(cutInLine ? HYAsyncTaskActiveOrderToFirst : HYAsyncTaskActiveOrderToLast)];
-    [self bindAsyncTask:deliverer];
+    if( [self bindAsyncTask:deliverer] == YES ) {
+        [self setTask:deliverer forKey:[@(deliverer.issuedId) stringValue]];
+    }
     
     HYResult *result;
     if( (result = [HYResult resultWithName:self.name]) == nil ) {
