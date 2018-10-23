@@ -1,7 +1,7 @@
 source 'https://github.com/CocoaPods/Specs.git'
-platform :ios, '8.1'
+platform :ios, '8.0'
 
 target "Sandbox" do
-	pod 'Hydra'
-	pod 'HJAsyncHttpDeliverer'
+	pod 'Hydra',
+	pod 'HJAsyncHttpDeliverer', '~> 2.0'
 end
