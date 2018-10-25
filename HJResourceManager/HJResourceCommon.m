@@ -28,4 +28,55 @@
     return HJResourceDataTypeData;
 }
 
++ (NSDictionary *)queryForDataUrlString:(NSString *)urlString
+{
+    if( urlString.length == 0 ) {
+        return nil;
+    }
+    return @{HJResourceQueryKeyRequestValue:urlString, HJResourceQueryKeyDataType:@(HJResourceDataTypeData)};
+}
+
++ (NSDictionary *)queryForStringUrlString:(NSString *)urlString
+{
+    if( urlString.length == 0 ) {
+        return nil;
+    }
+    return @{HJResourceQueryKeyRequestValue:urlString, HJResourceQueryKeyDataType:@(HJResourceDataTypeString)};
+}
+
++ (NSDictionary *)queryForImageUrlString:(NSString *)urlString
+{
+    if( urlString.length == 0 ) {
+        return nil;
+    }
+    return @{HJResourceQueryKeyRequestValue:urlString, HJResourceQueryKeyDataType:@(HJResourceDataTypeImage)};
+}
+
++ (NSDictionary *)queryForImageUrlString:(NSString *)urlString remakerName:(NSString *)remakerName remakerParameter:(NSDictionary *)remakerParameter
+{
+    if( (urlString.length == 0) || (remakerName.length == 0) ) {
+        return nil;
+    }
+    if( remakerParameter.count == 0 ) {
+        return @{HJResourceQueryKeyRequestValue:urlString, HJResourceQueryKeyDataType:@(HJResourceDataTypeImage), HJResourceQueryKeyRemakerName:remakerName};
+    }
+    return @{HJResourceQueryKeyRequestValue:urlString, HJResourceQueryKeyDataType:@(HJResourceDataTypeImage), HJResourceQueryKeyRemakerName:remakerName, HJResourceQueryKeyRemakerParameter:remakerParameter};
+}
+
++ (NSDictionary *)queryForSizeUrlString:(NSString *)urlString
+{
+    if( urlString.length == 0 ) {
+        return nil;
+    }
+    return @{HJResourceQueryKeyRequestValue:urlString, HJResourceQueryKeyDataType:@(HJResourceDataTypeSize)};
+}
+
++ (NSDictionary *)queryForFilePathUrlString:(NSString *)urlString
+{
+    if( urlString.length == 0 ) {
+        return nil;
+    }
+    return @{HJResourceQueryKeyRequestValue:urlString, HJResourceQueryKeyDataType:@(HJResourceDataTypeFilePath)};
+}
+
 @end
