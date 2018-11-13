@@ -21,7 +21,7 @@
 #define     HJResourceQueryKeyRemakerParameter      @"HJResourceQueryKeyRemakerParameter"
 #define     HJResourceQueryKeyCipherName            @"HJResourceQueryKeyCipherName"
 #define     HJResourceQueryKeyExpireTimeInterval    @"HJResourceQueryKeyExpireTimeInterval"
-#define     HJResourceQueryKeyBoundarySize          @"HJResourceQueryKeyBoundarySize"
+#define     HJResourceQueryKeyNotifyDeliverer       @"HJResourceQueryKeyNotifyDeliverer"
 
 typedef NS_ENUM(NSInteger, HJResourceDataType)
 {
@@ -35,5 +35,12 @@ typedef NS_ENUM(NSInteger, HJResourceDataType)
 @interface HJResourceCommon : NSObject
 
 + (HJResourceDataType)dataTypeFromMimeType:(NSString * _Nullable)mimeType;
+
++ (NSDictionary * _Nullable)queryForDataUrlString:(NSString * _Nullable)urlString;
++ (NSDictionary * _Nullable)queryForStringUrlString:(NSString * _Nullable)urlString;
++ (NSDictionary * _Nullable)queryForImageUrlString:(NSString * _Nullable)urlString;
++ (NSDictionary * _Nullable)queryForImageUrlString:(NSString * _Nullable)urlString remakerName:(NSString * _Nullable)remakerName remakerParameter:(NSDictionary * _Nullable)remakerParameter;
++ (NSDictionary * _Nullable)queryForSizeUrlString:(NSString * _Nullable)urlString;
++ (NSDictionary * _Nullable)queryForFilePathUrlString:(NSString * _Nullable)urlString;
 
 @end
