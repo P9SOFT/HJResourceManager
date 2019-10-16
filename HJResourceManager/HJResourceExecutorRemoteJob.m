@@ -163,9 +163,8 @@
     deliverer.timeoutInterval = self.timeoutInterval;
     [deliverer setNotifyStatus:[[anQuery parameterForKey:HJResourceQueryKeyNotifyDeliverer] boolValue]];
     [deliverer activeLimiterName:self.name withCount:self.maximumConnection byOrder:(cutInLine ? HYAsyncTaskActiveOrderToFirst : HYAsyncTaskActiveOrderToLast)];
-    if( [self bindAsyncTask:deliverer] == YES ) {
-        [self setTask:deliverer forKey:[@(deliverer.issuedId) stringValue]];
-    }
+    [self setTask:deliverer forKey:[@(deliverer.issuedId) stringValue]];
+    [self bindAsyncTask:deliverer];
     
     HYResult *result;
     if( (result = [HYResult resultWithName:self.name]) == nil ) {
