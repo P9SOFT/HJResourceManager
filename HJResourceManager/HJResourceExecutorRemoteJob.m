@@ -253,7 +253,7 @@
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didSendBodyData:(int64_t)bytesSent totalBytesSent:(int64_t)totalBytesSent totalBytesExpectedToSend:(int64_t)totalBytesExpectedToSend
 {
     HJAsyncHttpDeliverer *deliverer = [self taskForKey:task.taskDescription];
-    [deliverer sendBodyData:bytesSent totalBytesWritten:totalBytesSent totalBytesExpectedToWrite:totalBytesExpectedToSend];
+    [deliverer sendBodyData:(unsigned long long)bytesSent totalBytesWritten:(unsigned long long)totalBytesSent totalBytesExpectedToWrite:(unsigned long long)totalBytesExpectedToSend];
 }
 
 - (void)URLSession:(NSURLSession *)session task:(NSURLSessionTask *)task didCompleteWithError:(nullable NSError *)error
